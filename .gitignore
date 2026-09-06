@@ -1,0 +1,43 @@
+# --- Credenciales y datos personales: NUNCA en el repo ---
+.env
+.env.*
+!.env.example
+*.token
+tokens.json
+secrets/
+
+# --- Estado local (SQLite, cachés, histórico) ---
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+data/
+
+# --- Respuestas crudas de la API (pueden contener VIN) ---
+*.raw.json
+captures/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# --- Tooling ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editores / SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
