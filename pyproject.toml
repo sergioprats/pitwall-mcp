@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pitwall-mcp"
+version = "0.1.0"
+description = "Read-only MCP server over the BMW CarData customer API. Not affiliated with BMW AG."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+authors = [{ name = "Panesoft" }]
+keywords = ["mcp", "cardata", "telematics", "maintenance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Home Automation",
+]
+
+dependencies = [
+    # Pinned exactly: alpha library, its API may change without notice.
+    # Wrapped by cardata/client.py; no other module imports it.
+    "bmw-cardata==0.1.0a3",
+    "mcp>=2.1.1,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=1",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/panesoft/pitwall-mcp"
+Issues = "https://github.com/panesoft/pitwall-mcp/issues"
+
+[project.scripts]
+pitwall-mcp = "pitwall_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pitwall_mcp"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"spec/telematic_catalogue.json" = "pitwall_mcp/spec/telematic_catalogue.json"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
