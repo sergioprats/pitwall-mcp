@@ -75,6 +75,14 @@ def _normalise(text: str) -> str:
     return text.lower().translate(_ACCENTS)
 
 
+def _clean(value: str | None) -> str | None:
+    """Normalise the catalogue's occasional literal "null" string to None."""
+    if value is None:
+        return None
+    text = value.strip()
+    return None if text in ("", "null") else text
+
+
 def _expand(term: str) -> tuple[str, ...]:
     """Return the term plus its English equivalents, if any."""
     return (term, *_SPANISH_SYNONYMS.get(term, ()))
@@ -135,7 +143,12 @@ class Catalogue:
 
     @classmethod
     def load(cls, path: Path) -> Catalogue:
-        """Read and parse the catalogue JSON from disk."""
+        """Read and parse the catalogue JSON from disk.
+
+        One quirk of the published catalogue: `vehicle.vehicle.travelledDistance`
+        carries the literal STRING "null" as its unit instead of a JSON null.
+        `_clean` normalises that, so no output ever prints "unidad null".
+        """
         raw: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         entries: list[CatalogueEntry] = []
         for category in raw.get("categories", []):
@@ -147,9 +160,9 @@ class Catalogue:
                         name=item.get("name") or "",
                         description=item.get("description") or "",
                         technical_descriptor=item.get("technical_descriptor") or "",
-                        data_type=item.get("data_type"),
-                        value_range=item.get("value_range"),
-                        unit=item.get("unit"),
+                        data_type=_clean(item.get("data_type")),
+                        value_range=_clean(item.get("value_range")),
+                        unit=_clean(item.get("unit")),
                         streamable=bool(item.get("streamable")),
                     )
                 )
