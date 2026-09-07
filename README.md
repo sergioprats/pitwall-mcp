@@ -92,9 +92,14 @@ Requiere **Python 3.12+**.
 git clone https://github.com/panesoft/pitwall-mcp
 cd pitwall-mcp
 python -m venv .venv
-.venv/Scripts/activate        # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+Los comandos de abajo usan el intérprete del entorno virtual de forma explícita
+(`.venv/Scripts/python.exe` en Windows, `.venv/bin/python` en Linux y macOS).
+Si activas el entorno (`.venv/Scripts/activate`, o `source .venv/bin/activate`),
+te basta con `python`. Sin activar y con el `python` del sistema, fallará con
+`ModuleNotFoundError: No module named 'bmw_cardata'`.
 
 ### 1. Configuración
 
@@ -109,7 +114,7 @@ el [portal BMW CarData](https://bmw-cardata.bmwgroup.com). Necesitas los scopes
 ### 2. Login
 
 ```bash
-python scripts/login.py
+.venv/Scripts/python.exe scripts/login.py
 ```
 
 Device flow: el script imprime una URL y un código, tú lo autorizas en el
@@ -122,8 +127,8 @@ quedan menos de 3; si caduca, hay que repetir este paso a mano.
 ### 3. Contenedor
 
 ```bash
-python scripts/bootstrap_containers.py --dry-run   # muestra qué enviaría
-python scripts/bootstrap_containers.py --create    # gasta 1 petición
+.venv/Scripts/python.exe scripts/bootstrap_containers.py --dry-run   # muestra qué enviaría
+.venv/Scripts/python.exe scripts/bootstrap_containers.py --create    # gasta 1 petición
 ```
 
 Copia el `containerId` resultante a `PITWALL_CONTAINER_ID` en el `.env`. El
@@ -132,7 +137,7 @@ servidor MCP solo consume ese id: nunca crea ni borra nada.
 ### 4. Arrancar
 
 ```bash
-python -m pitwall_mcp
+.venv/Scripts/python.exe -m pitwall_mcp
 ```
 
 Transporte **stdio**. El `.env` se busca en el directorio desde el que se lanza
@@ -159,8 +164,8 @@ Para Claude Desktop o cualquier cliente MCP:
 ## Desarrollo
 
 ```bash
-python -m pytest                              # ningún test toca la red
-python scripts/refresh_catalogue.py --check   # ¿ha cambiado el catálogo?
+.venv/Scripts/python.exe -m pytest                              # ningún test toca la red
+.venv/Scripts/python.exe scripts/refresh_catalogue.py --check   # ¿ha cambiado el catálogo?
 ```
 
 **Ningún test hace llamadas reales.** Todos van contra fixtures grabados a mano
