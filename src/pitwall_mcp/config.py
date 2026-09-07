@@ -96,9 +96,31 @@ def _catalogue_path() -> Path:
     return Path(__file__).resolve().parents[2] / "spec" / "telematic_catalogue.json"
 
 
+def find_dotenv(env: dict[str, str] | None = None) -> Path | None:
+    """Locate the .env file, or `None` when there is none.
+
+    An MCP client starts this server with whatever working directory it likes,
+    so looking only in the cwd means a correctly filled .env is silently
+    ignored and the user is told their credentials are missing while staring
+    at them. Order: an explicit PITWALL_ENV_FILE, then the cwd, then the
+    repository root next to the package.
+    """
+    source = env if env is not None else dict(os.environ)
+    explicit = source.get("PITWALL_ENV_FILE", "").strip()
+    if explicit:
+        return Path(explicit).expanduser()
+
+    candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parents[2] / ".env",
+    ]
+    return next((path for path in candidates if path.is_file()), None)
+
+
 def load_settings(env: dict[str, str] | None = None, *, dotenv: Path | None = None) -> Settings:
     """Build Settings from the process environment, overlaid on a .env file."""
-    file_values = load_dotenv(dotenv or Path.cwd() / ".env")
+    env_file = dotenv if dotenv is not None else find_dotenv(env)
+    file_values = load_dotenv(env_file) if env_file is not None else {}
     source = {**file_values, **(env if env is not None else dict(os.environ))}
 
     def get(key: str) -> str | None:

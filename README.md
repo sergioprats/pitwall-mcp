@@ -135,7 +135,12 @@ servidor MCP solo consume ese id: nunca crea ni borra nada.
 python -m pitwall_mcp
 ```
 
-Transporte **stdio**. Para Claude Desktop o cualquier cliente MCP:
+Transporte **stdio**. El `.env` se busca en el directorio desde el que se lanza
+el servidor y, si no aparece, en la raíz del repositorio — un cliente MCP arranca
+el proceso con el directorio de trabajo que le apetece. Si tu `.env` vive en otro
+sitio, indícalo con `PITWALL_ENV_FILE`.
+
+Para Claude Desktop o cualquier cliente MCP:
 
 ```json
 {

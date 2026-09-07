@@ -334,3 +334,80 @@ def test_an_unreadable_token_file_is_reported_as_missing(settings):
     settings.token_file.parent.mkdir(parents=True, exist_ok=True)
     settings.token_file.write_text("{esto no es json", encoding="utf-8")
     assert TokenStore(settings.token_file).load() is None
+
+
+# --- Device login ----------------------------------------------------------
+
+
+class FakeDevice:
+    """The device-code response the user has to act on."""
+
+    user_code = "ABCD-1234"
+    device_code = "device-code-de-prueba"
+    verification_uri = "https://customer.bmwgroup.com/gcdm/oauth/device"
+    verification_uri_complete = None
+    expires_in = 600
+    interval = 1
+
+
+async def test_device_login_stores_the_bundle_and_prompts_the_user(
+    settings, fake_flow, monkeypatch
+):
+    """The flow is useless unless the user is told the code and the URL."""
+    prompted = []
+
+    async def request_device_code(self):
+        return FakeDevice()
+
+    async def poll_for_token(self, device_code, *, code_verifier=None, interval=5):
+        assert device_code == FakeDevice.device_code
+        return FakeTokenResponse(access_token="access-login", refresh_token="refresh-login")
+
+    monkeypatch.setattr(FakeFlow, "request_device_code", request_device_code, raising=False)
+    monkeypatch.setattr(FakeFlow, "poll_for_token", poll_for_token, raising=False)
+
+    bundle = await TokenManager(settings).device_login(prompted.append)
+
+    assert prompted and prompted[0].user_code == "ABCD-1234"
+    assert bundle.access_token == "access-login"
+    assert bundle.gcid == "gcid-de-prueba"
+    assert json.loads(settings.token_file.read_text(encoding="utf-8"))["refresh_token"] == (
+        "refresh-login"
+    )
+
+
+async def test_device_login_does_not_hold_the_lock_while_waiting_for_the_human(
+    settings, fake_flow, monkeypatch
+):
+    """Polling can take minutes; the daemon must still be able to refresh."""
+    lock_free_while_polling = False
+
+    async def request_device_code(self):
+        return FakeDevice()
+
+    async def poll_for_token(self, device_code, *, code_verifier=None, interval=5):
+        nonlocal lock_free_while_polling
+        try:
+            async with TokenLock(
+                TokenStore(settings.token_file).lock_path, timeout=timedelta(seconds=0.3)
+            ):
+                lock_free_while_polling = True
+        except errors.TokenLockTimeoutError:
+            lock_free_while_polling = False
+        return FakeTokenResponse(access_token="access-login", refresh_token="refresh-login")
+
+    monkeypatch.setattr(FakeFlow, "request_device_code", request_device_code, raising=False)
+    monkeypatch.setattr(FakeFlow, "poll_for_token", poll_for_token, raising=False)
+
+    await TokenManager(settings).device_login(lambda device: None)
+
+    assert lock_free_while_polling, "device_login retiene el cerrojo mientras espera al usuario"
+
+
+async def test_device_login_without_a_client_id_says_what_to_configure(
+    bare_settings, fake_flow
+):
+    """No client id, no flow, and the message names the variable."""
+    with pytest.raises(errors.MissingCredentialsError) as excinfo:
+        await TokenManager(bare_settings).device_login(lambda device: None)
+    assert "PITWALL_CLIENT_ID" in excinfo.value.message
