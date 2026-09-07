@@ -146,8 +146,16 @@ def test_the_catalogue_is_found_without_configuration(tmp_path):
 
 
 def test_missing_for_api_names_both_blockers(tmp_path):
-    """The user needs to know everything that is missing, not just the first."""
-    settings = load_settings({}, dotenv=tmp_path / "x.env")
+    """The user needs to know everything that is missing, not just the first.
+
+    The token file is pinned to a temporary path on purpose: pointing at the
+    default location would make this test pass or fail depending on whether
+    whoever runs it happens to have logged in on that machine.
+    """
+    settings = load_settings(
+        {"PITWALL_TOKEN_FILE": str(tmp_path / "tokens.json")},
+        dotenv=tmp_path / "x.env",
+    )
     missing = settings.missing_for_api()
 
     assert "PITWALL_CLIENT_ID" in missing

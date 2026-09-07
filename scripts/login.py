@@ -70,7 +70,8 @@ async def main() -> int:
             f"(14 dias). Antes de esa fecha hay que repetir este login."
         )
     print()
-    print("Siguiente paso: 'python scripts/bootstrap_containers.py --dry-run'")
+    print("Siguiente paso, con el mismo interprete que has usado aqui:")
+    print(f"  {sys.executable} scripts/bootstrap_containers.py --dry-run")
     return 0
 
 

@@ -251,10 +251,10 @@ El broker quiere `gcid` + **`id_token`**. Ambos vienen de `TokenResponse`, que
 ya persistimos entera en `tokens.json`: `gcid` es obligatorio en el modelo, e
 `id_token` opcional.
 
-**Primer requisito, verificable en el Bloque B antes de escribir nada:**
-confirmar que el `id_token` que devuelve nuestro device flow **existe y no es
-`None`**. Si BMW no lo emite sin el scope `openid`, no hay streaming. Nuestro
-`DEFAULT_SCOPES` ya lo incluye, pero hay que verlo llegar.
+**VERIFICADO el 2026-09-07 con un login real.** BMW concedió los cuatro scopes
+(`cardata:api:read openid cardata:streaming:read authenticate_user`) y devolvió
+un `id_token` de 1324 caracteres junto con el `gcid`. Las dos credenciales que
+necesita el broker MQTT existen, así que la Fase 2 es viable por este lado.
 
 ### El problema: el refresh token rota
 
