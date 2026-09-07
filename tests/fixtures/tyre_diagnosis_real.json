@@ -1,0 +1,353 @@
+{
+  "errors": [],
+  "passengerCar": {
+    "mountedTyres": {
+      "aggregatedQualityStatus": {
+        "label": "Data source"
+      },
+      "frontLeft": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Front left tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "frontRight": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Front right tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "label": "Mounted",
+      "rearLeft": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Rear left tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "rearRight": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Rear right tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      }
+    },
+    "unmountedTyres": {
+      "aggregatedQualityStatus": {
+        "label": "Data source"
+      },
+      "frontLeft": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Front left tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "frontRight": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Front right tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "label": "Unmounted",
+      "rearLeft": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Rear left tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      },
+      "rearRight": {
+        "dimension": {
+          "aspectRatio": 0,
+          "label": "Dimension",
+          "loadIndex": 0,
+          "rimDiameter": 0,
+          "sectionWidth": 0
+        },
+        "label": "Rear right tyre",
+        "mountingDate": {
+          "label": "Mounting date"
+        },
+        "optimizedForOem": {
+          "label": "Optimised for OEM"
+        },
+        "partNumber": {
+          "label": "Part number"
+        },
+        "qualityStatus": {
+          "label": "Data source"
+        },
+        "runFlat": {
+          "label": "Run-flat tyres",
+          "runFlat": false
+        },
+        "season": {
+          "label": "Season"
+        },
+        "tread": {
+          "label": "Tyre tread"
+        },
+        "tyreDefect": {
+          "label": "Tyre pressure status"
+        },
+        "tyreProductionDate": {
+          "label": "Production date"
+        },
+        "tyreWear": {
+          "dueMileage": 0,
+          "label": "Service due in"
+        }
+      }
+    }
+  }
+}

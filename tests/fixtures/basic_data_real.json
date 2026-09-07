@@ -1,0 +1,22 @@
+{
+  "bodyType": "Sports Activity Vehicle",
+  "brand": "BMW",
+  "colourCodeRaw": "300",
+  "colourDescription": "ALPINWEISS  III",
+  "constructionDate": "2022-10-17T00:00:00.000+0000",
+  "countryCode": "ES",
+  "driveTrain": "CONV",
+  "engine": "B38N",
+  "fullSAList": "0478,05AV,06WC,01LS,0431,01DF,0430,06NX,08R9,03MC,08KA,04AT,0302,06C4,0552,05DM,0856,0322,07EV,0420,0654,02TF,02PA,0230,02VC,02VB,0548,0883,05AC,01CB,09QR,08TF,09QT,09QV,06AK,06AF,09PA,06AE",
+  "hasNavi": false,
+  "hasSunRoof": false,
+  "headUnit": "HU_MGU",
+  "modelKey": "11EE",
+  "modelName": "X1 sDrive18i",
+  "numberOfDoors": 5,
+  "propulsionType": "BE",
+  "series": "X",
+  "seriesDevt": "U11",
+  "simStatus": "ACTIVE",
+  "steering": "LL"
+}

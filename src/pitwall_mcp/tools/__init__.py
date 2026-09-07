@@ -109,9 +109,9 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         ),
         annotations=READ_ONLY,
     )
-    def list_vehicles() -> str:
+    async def list_vehicles() -> str:
         """List the VINs mapped to the account."""
-        return _guard(lambda: vehicle_tools.list_vehicles(context.settings))
+        return await _guard_async(vehicle_tools.list_vehicles(context.adapter, context.settings))
 
     @server.tool(
         name="get_vehicle_basic_data",
@@ -122,9 +122,11 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         ),
         annotations=READ_ONLY,
     )
-    def get_vehicle_basic_data() -> str:
+    async def get_vehicle_basic_data() -> str:
         """Return the vehicle's basic data."""
-        return _guard(lambda: vehicle_tools.get_vehicle_basic_data(context.settings))
+        return await _guard_async(
+            vehicle_tools.get_vehicle_basic_data(context.adapter, context.settings)
+        )
 
     @server.tool(
         name="report_product_update_step",
@@ -132,13 +134,16 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         description=(
             "Expone puStep, el paso de actualizacion de PRODUCTO. NO es la version de "
             "software del vehiculo: ese descriptor no existe en el catalogo de BMW. "
-            "Guarda cada lectura en el historico para detectar si alguna vez cambia."
+            "Verificado en este vehiculo: /basicData NO devuelve puStep, asi que la "
+            "herramienta explica esa ausencia en vez de sustituirla por otra cosa."
         ),
         annotations=READ_ONLY,
     )
-    def report_product_update_step() -> str:
+    async def report_product_update_step() -> str:
         """Report `puStep`, explicitly labelled as a product update step."""
-        return _guard(lambda: vehicle_tools.report_product_update_step(context.settings))
+        return await _guard_async(
+            vehicle_tools.report_product_update_step(context.adapter, context.settings)
+        )
 
     @server.tool(
         name="get_telematic_data",
@@ -181,13 +186,14 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         description=(
             "Desgaste, defectos, dimensiones, fechas de montaje y fabricacion, "
             "temporada, runflat y dibujo. NO devuelve presiones: esas vienen del "
-            "contenedor telematico. Cache de 7 dias."
+            "contenedor telematico. Verificado en este vehiculo: BMW responde con la "
+            "estructura vacia, y los ceros que trae NO son medidas. Cache de 7 dias."
         ),
         annotations=READ_ONLY,
     )
-    def get_tyre_diagnosis() -> str:
+    async def get_tyre_diagnosis() -> str:
         """Return the smart maintenance tyre diagnosis."""
-        return _guard(lambda: tyre_tools.get_tyre_diagnosis(context.settings))
+        return await _guard_async(tyre_tools.get_tyre_diagnosis(context.adapter, context.settings))
 
     @server.tool(
         name="get_maintenance_summary",

@@ -240,13 +240,13 @@ real.
 | `list_vehicles()` | `/mappings` | confirmada |
 | `get_vehicle_basic_data(vin)` | `/basicData` | confirmada |
 | `get_vehicle_status(vin)` | `/telematicData` | confirmada: km y desglose CBS por partida. La estructura de `conditionBasedServices` está verificada contra una respuesta real y grabada como fixture |
-| `get_tyre_diagnosis(vin)` | `/smartMaintenanceTyreDiagnosis` | confirmada, sin presiones |
+| `get_tyre_diagnosis(vin)` | `/smartMaintenanceTyreDiagnosis` | implementada, pero **este vehículo devuelve la estructura vacía**: solo etiquetas y ceros de relleno. La herramienta lo declara y no presenta los ceros como medidas |
 | `get_telematic_data(vin, container_id)` | `/telematicData` | confirmada |
 | `search_descriptors(query)` | catálogo local | confirmada, **no gasta cuota** |
 | `get_api_quota()` | SQLite | confirmada, no gasta cuota |
 | `get_maintenance_summary(vin)` | compuesta | confirmada, con las reservas de CBS |
 | `get_software_version(vin)` | — | **no implementable como tal** |
-| `report_product_update_step(vin)` | `/basicData` | sustituye a la anterior: expone `puStep` etiquetado explícitamente como paso de actualización de producto, **no** versión de software, y lo guarda en el histórico |
+| `report_product_update_step(vin)` | `/basicData` | implementada, pero **este vehículo no devuelve `puStep`**. Verificado el 2026-09-07. La herramienta explica la ausencia y sigue aclarando que `puStep` nunca fue la versión de software |
 | `diagnose_software_update(vin)` | compuesta, sobre histórico | confirmada, con veredicto acotado |
 
 ### `get_maintenance_summary(vin)`
@@ -399,12 +399,21 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
    por saber si esos 11 se rellenan en otras condiciones —con el coche
    despierto, recién apagado, en movimiento— o si este U11 no los emite nunca.
    Solo se sabe repitiendo la lectura en circunstancias distintas.
-4. **`puStep` puede no moverse nunca** con las RSU. Si tras meses de
-   histórico no cambia, se documenta como inútil para el diagnóstico en
-   lugar de mantener la ficción.
+4. ~~`puStep` puede no moverse nunca con las RSU.~~ **CERRADO, y peor de lo
+   esperado, el 2026-09-07**: `/basicData` **no devuelve `puStep`** para este
+   vehículo. No es que no se mueva: no llega. Con esto, no queda **ningún**
+   dato en toda la API que informe sobre el software del coche.
 5. **Reset de cuota**: huso horario desconocido.
 6. **`conditionBasedServicesCount` no cuadra con el array**: devolvió 9 con 5
    partidas. Sin explicación. No se inventa una.
 7. **Desfase de reloj de BMW**: una lectura traía un `timestamp` un minuto en
    el futuro. Los cálculos de antigüedad tienen que tolerar valores negativos
    sin presentarlos como "hace un momento".
+8. **`/basicData` no coincide con el swagger.** Este vehículo no devuelve
+   `vin`, `puStep`, `isTelematicsCapable` ni `modelRange`, y en cambio devuelve
+   `seriesDevt`, `colourDescription` y `countryCode`, que el swagger no
+   documenta. El adaptador guarda la respuesta cruda, así que esto no rompe
+   nada, pero invalida el esquema como fuente de verdad sobre qué campos llegan.
+9. **El diagnóstico de neumáticos viene vacío**: estructura completa, valores a
+   cero, `errors: []`. Probablemente requiere que los neumáticos estén
+   registrados en el sistema de BMW. Los ceros son relleno, no medidas.

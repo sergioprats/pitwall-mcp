@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from conftest import FakeTokens
+from conftest import FakeTokens, load_fixture
 
 from pitwall_mcp.server import build_server
 from pitwall_mcp.storage.db import Database
@@ -99,12 +99,11 @@ async def test_pending_tools_ask_for_a_login_when_there_are_no_credentials(bare_
     assert "scripts/login.py" in text
 
 
-async def test_pending_tools_say_they_are_not_implemented_yet(server):
-    """With credentials in place, the ones still unwritten admit it."""
-    text = await _call(server, "report_product_update_step")
+async def test_the_last_pending_tool_admits_it(server):
+    """diagnose_software_update is the only one still unwritten, and says so."""
+    text = await _call(server, "diagnose_software_update")
     assert "todavia no" in text
     assert "Bloque B" in text
-    assert "puStep" in text
 
 
 async def test_the_diagnosis_tool_states_its_limits_up_front(server):
@@ -115,10 +114,14 @@ async def test_the_diagnosis_tool_states_its_limits_up_front(server):
     assert "LA SERIE" in text
 
 
-async def test_the_tyre_tool_warns_it_has_no_pressures(server):
+async def test_the_tyre_tool_warns_it_has_no_pressures(server, fake_client):
     """Pressures and diagnosis are two different sources."""
+    fake_client.responses["get_smart_maintenance_tyre_diagnosis"] = load_fixture(
+        "tyre_diagnosis_real.json"
+    )
     text = await _call(server, "get_tyre_diagnosis")
-    assert "NO DEVUELVE PRESIONES" in text
+    assert "NO devuelve presiones" in text
+    assert "get_maintenance_summary" in text
 
 
 async def test_a_missing_container_is_reported_before_anything_else(ready_settings):

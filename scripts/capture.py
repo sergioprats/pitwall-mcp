@@ -324,8 +324,12 @@ async def run(args: argparse.Namespace) -> int:
             )
             print()
             print(f"Fixture anonimizado escrito en: {fixture_path}")
+            original = json.dumps(result.payload, ensure_ascii=False)
             for secret, placeholder in replacements.items():
-                print(f"  sustituido {secret[:4]}...{secret[-4:]} -> {placeholder}")
+                if secret in original:
+                    print(f"  sustituido {secret[:4]}...{secret[-4:]} -> {placeholder}")
+                else:
+                    print(f"  (no aparecia en la respuesta: {secret[:4]}...{secret[-4:]})")
             print("  REVISALO antes de commitear.")
         return 0
 
