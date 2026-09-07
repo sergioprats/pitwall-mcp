@@ -188,6 +188,57 @@ python scripts/bootstrap_containers.py --dry-run
 
 ---
 
+## Lo aprendido de la primera lectura real (2026-09-07)
+
+Una sola llamada a `/telematicData`. Fixture: `tests/fixtures/telematic_real.json`.
+
+### Llegan las 32 claves, pero solo 21 con valor
+
+Once descriptores vinieron con `"value": null` y `"timestamp": null`, conservando
+su unidad. Son **tres estados distintos**, y confundirlos seria mentir:
+
+| Estado | Significa |
+|---|---|
+| Con valor | lectura real |
+| **Presente y vacio** (`value: null`) | el vehiculo conoce el campo y no tiene lectura |
+| `-NA-` | el vehiculo dice explicitamente "sin medida" |
+| Ausente | la clave no viene en la respuesta |
+
+Vacios en esta lectura: las cuatro `tire.temperature`, `battery.stateOfCharge`,
+`battery.stateOfChargePlausibility`, `deepSleepModeActive`, `isIgnitionOn`,
+`isActive`, `checkControlMessages` y
+`conditionBasedServicesAverageDistancePerDay`.
+
+**Duele especialmente** que `deepSleepModeActive` y `stateOfCharge` esten vacios:
+son dos de las tres senales que `diagnose_software_update` necesita.
+
+### `conditionBasedServices` llega, y es JSON dentro de una cadena
+
+La sospecha de que estuviera ligado a un endpoint dedicado era **falsa**. Pero su
+`value` es una **cadena** que hay que decodificar por segunda vez con
+`json.loads`. Dentro, un array de objetos con `date`, `description`, `id`,
+`messageType`, `status`, `text`, `title`, `unitOfLengthRemaining`.
+
+`id` es entero; todo lo demas son cadenas, kilometros incluidos. Con centinelas:
+
+- `"date": "null"` — la cadena literal, no un `null` de JSON.
+- `"unitOfLengthRemaining": "-"` cuando la partida solo tiene fecha.
+
+Partidas de este U11: `Front Brake` (2), `Engine oil` (1), `Brake fluid` (3),
+`Statutory vehicle inspection` (32), `Vehicle check` (100).
+
+### Discrepancia sin explicar
+
+`conditionBasedServicesCount` devolvio **9** con **5** partidas en el array. No
+se sabe por que. Las herramientas dan los dos numeros y no fingen que cuadran.
+
+### Desfase de reloj
+
+Un `timestamp` venia un minuto en el futuro. Los calculos de antiguedad toleran
+valores negativos y los presentan como "dentro de", no como "hace".
+
+---
+
 ## Como reproducir esta verificacion
 
 ```

@@ -78,6 +78,19 @@ def settings(tmp_path) -> Settings:
 
 
 @pytest.fixture
+def ready_settings(settings) -> Settings:
+    """Settings with a token file on disk, so credentials count as present.
+
+    The file content does not matter: the tools that use this get a `FakeTokens`
+    instead of a real `TokenManager`. What matters is that `missing_for_api()`
+    comes back empty, which is what gates every tool.
+    """
+    settings.token_file.parent.mkdir(parents=True, exist_ok=True)
+    settings.token_file.write_text("{}", encoding="utf-8")
+    return settings
+
+
+@pytest.fixture
 def bare_settings(tmp_path) -> Settings:
     """Settings with nothing configured: no client id, no VIN, no container."""
     return Settings(

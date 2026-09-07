@@ -56,6 +56,14 @@ def _guard(call: Callable[[], str]) -> str:
         return f"ERROR — {err.message}"
 
 
+async def _guard_async(coro) -> str:  # noqa: ANN001 - awaitable returning str
+    """Same guard for the tools that actually reach the API."""
+    try:
+        return await coro
+    except PitwallError as err:
+        return f"ERROR — {err.message}"
+
+
 def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
     """Register every tool on the server and return it."""
 
@@ -141,9 +149,13 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         ),
         annotations=READ_ONLY,
     )
-    def get_telematic_data() -> str:
+    async def get_telematic_data() -> str:
         """Read the configured telematic container."""
-        return _guard(lambda: telematic_tools.get_telematic_data(context.settings))
+        return await _guard_async(
+            telematic_tools.get_telematic_data(
+                context.adapter, context.settings, context.catalogue
+            )
+        )
 
     @server.tool(
         name="get_vehicle_status",
@@ -151,13 +163,17 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         description=(
             "Kilometraje y avisos de mantenimiento (CBS). El desglose CBS por partida "
             "esta pendiente de verificar contra una respuesta real: la estructura de "
-            "conditionBasedServices no esta documentada por BMW."
+            "El desglose por partida esta verificado contra una respuesta real."
         ),
         annotations=READ_ONLY,
     )
-    def get_vehicle_status() -> str:
+    async def get_vehicle_status() -> str:
         """Return mileage and the CBS block."""
-        return _guard(lambda: telematic_tools.get_vehicle_status(context.settings))
+        return await _guard_async(
+            telematic_tools.get_vehicle_status(
+                context.adapter, context.settings, context.catalogue
+            )
+        )
 
     @server.tool(
         name="get_tyre_diagnosis",
@@ -183,9 +199,13 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         ),
         annotations=READ_ONLY,
     )
-    def get_maintenance_summary() -> str:
+    async def get_maintenance_summary() -> str:
         """Return the composed maintenance summary."""
-        return _guard(lambda: diagnosis_tools.get_maintenance_summary(context.settings))
+        return await _guard_async(
+            diagnosis_tools.get_maintenance_summary(
+                context.adapter, context.settings, context.catalogue
+            )
+        )
 
     @server.tool(
         name="diagnose_software_update",

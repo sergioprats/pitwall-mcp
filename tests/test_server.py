@@ -24,14 +24,6 @@ EXPECTED_TOOLS = {
 
 
 @pytest.fixture
-def ready_settings(settings):
-    """Settings with a token file on disk, so credentials count as present."""
-    settings.token_file.parent.mkdir(parents=True, exist_ok=True)
-    settings.token_file.write_text("{}", encoding="utf-8")
-    return settings
-
-
-@pytest.fixture
 def server(ready_settings, fake_client):
     """A server whose tools have credentials but no data yet."""
     context = ToolContext(settings=ready_settings, db=Database(":memory:"))
@@ -108,11 +100,11 @@ async def test_pending_tools_ask_for_a_login_when_there_are_no_credentials(bare_
 
 
 async def test_pending_tools_say_they_are_not_implemented_yet(server):
-    """With credentials in place, they admit the work is not done."""
-    text = await _call(server, "get_vehicle_status")
+    """With credentials in place, the ones still unwritten admit it."""
+    text = await _call(server, "report_product_update_step")
     assert "todavia no" in text
     assert "Bloque B" in text
-    assert "conditionBasedServices" in text
+    assert "puStep" in text
 
 
 async def test_the_diagnosis_tool_states_its_limits_up_front(server):
