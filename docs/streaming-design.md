@@ -268,17 +268,48 @@ el anterior deja de valer. Con dos procesos compartiendo `tokens.json`:
    a las 10:05 con el refresh token **ya invalidado**.
 3. `invalid_grant`. **Y el usuario tiene que rehacer el login manual.**
 
-Tres opciones, con mi recomendación:
+Se evaluaron tres opciones:
 
-| Opción | Cómo | Coste |
+| Opción | Cómo | Veredicto |
 |---|---|---|
-| **A. Cerrojo de fichero sobre el refresh** *(recomendada)* | Un lock exclusivo alrededor del ciclo leer-refrescar-escribir. Quien no lo tiene, espera y **relee del disco**; si el bundle que aparece ya es válido, no refresca. | Bajo. Hay que quitar el cacheo ciego en memoria: releer `tokens.json` por `mtime` antes de decidir. |
-| B. Solo el daemon refresca | El servidor MCP se vuelve lector puro del fichero. | Acopla el MCP al daemon: sin daemon, nadie refresca. Inaceptable, el daemon es opcional. |
-| C. Ficheros de token separados | Dos device flows, dos credenciales. | Dos logins manuales cada 14 días. Y probablemente dos gcid, con lo que el cerrojo del stream deja de tener sentido. |
+| **A. Cerrojo de fichero sobre el refresh** | Lock exclusivo alrededor del ciclo leer-refrescar-escribir. Quien no lo tiene, espera y **relee del disco**; si el bundle que aparece ya es válido, no refresca. | **ELEGIDA E IMPLEMENTADA** |
+| B. Solo el daemon refresca | El servidor MCP se vuelve lector puro del fichero. | Descartada: acopla el MCP al daemon. Sin daemon, nadie refresca, y el daemon es opcional. |
+| C. Ficheros de token separados | Dos device flows, dos credenciales. | Descartada: dos logins manuales cada 14 días, y probablemente dos gcid, con lo que el cerrojo del stream deja de tener sentido. |
 
-**Recomiendo A**, y no es opcional: sin ella, el modo normal de fallo de la
-Fase 2 es "el usuario tiene que volver a loguearse a mano", que es exactamente
-lo que el aviso de los 3 días existe para evitar.
+### Estado: implementada (2026-09-07)
+
+Ya está en `cardata/auth.py`, antes de que exista el daemon, porque el arreglo
+toca código del Bloque A. **Son dos mecanismos, y defienden mitades distintas
+del problema:**
+
+1. **Nadie cachea el bundle en memoria.** `TokenStore.load()` va siempre al
+   disco y `TokenManager.bundle` lo consulta cada vez. Esto es lo que evita el
+   daño grave: usar un refresh token que el otro proceso ya rotó, que es lo que
+   provoca el `invalid_grant` y el login manual.
+2. **`TokenLock`, cerrojo exclusivo entre procesos**, sobre un fichero
+   `tokens.json.lock` aparte. Aparte y no sobre el propio `tokens.json` porque
+   este se reemplaza atómicamente en cada escritura, y un cerrojo sobre él se
+   iría con el inodo viejo. Dentro del cerrojo se **relee y se comprueba**: si
+   el proceso al que esperábamos ya renovó, se devuelve su access token y no se
+   manda un segundo refresh. Esto evita la rotación inútil.
+
+Detalles que importan:
+
+- `fcntl.flock` en POSIX, `msvcrt.locking` en Windows. Ambos se liberan solos si
+  el proceso muere, así que **no hay cerrojos huérfanos** que limpiar a mano.
+- La adquisición **sondea con `await asyncio.sleep`** en vez de bloquear, para
+  que esperar no congele el event loop de un servidor MCP que está atendiendo
+  otras herramientas.
+- Timeout de 30 s, con un error en español que explica que probablemente sea el
+  daemon y que se reintente.
+- `device_login` bloquea **solo la escritura**, no el sondeo: esperar a un humano
+  con un navegador puede tardar minutos, y retener el cerrojo ese rato dejaría
+  colgado a cualquier proceso que solo necesitaba renovar.
+
+Cubierto por 16 tests en `tests/test_auth.py`, incluido uno que lanza **un
+proceso de verdad** que retiene el cerrojo (no un mock: el daemon será otro
+proceso, no una tarea de este event loop), y otro que comprueba que un refresh
+fallido ni corrompe el fichero ni se queda el cerrojo.
 
 ### Renovación con la conexión abierta
 
@@ -454,8 +485,8 @@ tuya.
    muchas filas al año. ¿Retención indefinida, submuestreo por encima de cierta
    antigüedad, o nada hasta que moleste? Mi voto: **nada hasta medirlo**, y
    medirlo es el punto 1.
-5. **Refresh token compartido: ¿opción A confirmada?** (§6). Es la única
-   decisión que cambia código ya escrito, en `cardata/auth.py`.
+~~5. Refresh token compartido: ¿opción A confirmada?~~ **CERRADA el 2026-09-07:
+   opción A, implementada en `cardata/auth.py`. Ver §6.**
 
 ---
 
@@ -478,5 +509,6 @@ Cuando se implemente, esto es lo que debe cumplirse antes de darlo por bueno:
       conectado".
 - [ ] Ningún test toca la red: broker MQTT falso o mensajes inyectados. La
       regla 8 no tiene excepción para MQTT.
-- [ ] El refresh concurrente entre daemon y servidor MCP **no invalida** el
-      refresh token. Test con dos procesos reales, no con mocks.
+- [x] El refresh concurrente entre daemon y servidor MCP **no invalida** el
+      refresh token. *Hecho: `tests/test_auth.py`, con un proceso real para el
+      cerrojo. Queda por verificar contra BMW de verdad en el Bloque B.*

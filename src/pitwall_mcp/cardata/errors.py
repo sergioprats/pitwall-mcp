@@ -64,6 +64,23 @@ class CarDataUnavailableError(PitwallError):
     """BMW answered with a server-side or otherwise unexpected error."""
 
 
+class TokenLockTimeoutError(PitwallError):
+    """Another process held the token lock for too long."""
+
+
+def token_lock_timeout(lock_path, timeout) -> TokenLockTimeoutError:  # noqa: ANN001
+    """Explain a token-lock timeout without suggesting the user delete anything."""
+    seconds = int(timeout.total_seconds())
+    return TokenLockTimeoutError(
+        f"Otro proceso lleva mas de {seconds} s renovando los tokens y no ha soltado el "
+        f"cerrojo ({lock_path}). Normalmente es el daemon de streaming de la Fase 2: "
+        f"BMW rota el refresh token en cada renovacion, asi que solo un proceso puede "
+        f"renovarlo a la vez. Vuelve a intentarlo en unos segundos. Si se repite, "
+        f"comprueba que no haya quedado un proceso colgado; el fichero de cerrojo se "
+        f"libera solo cuando el proceso que lo tiene termina."
+    )
+
+
 def missing_credentials(missing: list[str]) -> MissingCredentialsError:
     """Explain which credentials are missing and how to obtain them."""
     detalle = ", ".join(missing) if missing else "credenciales"
