@@ -20,8 +20,14 @@ from mcp.server.mcpserver import MCPServer
 from mcp.types import ToolAnnotations
 
 from ..cardata.errors import PitwallError
-from . import catalogue_tools, diagnosis_tools, quota_tools, telematic_tools, tyre_tools
-from . import vehicle_tools
+from . import (
+    catalogue_tools,
+    diagnosis_tools,
+    quota_tools,
+    telematic_tools,
+    tyre_tools,
+    vehicle_tools,
+)
 from .context import ToolContext
 
 _LOGGER = logging.getLogger(__name__)

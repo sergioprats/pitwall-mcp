@@ -1,0 +1,6 @@
+{
+  "exveErrorId": "CU-429",
+  "exveErrorRef": "6f1c0c2e-0000-4b1a-9f7d-000000000000",
+  "exveErrorMsg": "Quota exceeded: maximum number of requests per 24 hours reached.",
+  "exveNote": "Try again after the quota window resets."
+}

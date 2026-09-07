@@ -1,0 +1,289 @@
+{
+  "passengerCar": {
+    "mountedTyres": {
+      "aggregatedQualityStatus": {
+        "label": "Estado global",
+        "qualityStatus": "OK",
+        "value": "OK"
+      },
+      "label": "Neumaticos montados",
+      "frontLeft": {
+        "label": "Delantera izquierda",
+        "dimension": {
+          "aspectRatio": 55,
+          "constructionType": "R",
+          "label": "Dimension",
+          "loadIndex": 95,
+          "rimDiameter": 18,
+          "sectionWidth": 225,
+          "speedRating": "V",
+          "value": "225/55 R18 95V"
+        },
+        "mountingDate": {
+          "label": "Fecha de montaje",
+          "mountingDate": "2024-02-27",
+          "value": "2024-02-27"
+        },
+        "optimizedForOem": {
+          "label": "OEM",
+          "optimizedForOem": "BMW",
+          "value": "*"
+        },
+        "partNumber": {
+          "label": "Numero de pieza",
+          "partNumber": "36112468543",
+          "value": "36112468543"
+        },
+        "qualityStatus": {
+          "label": "Calidad",
+          "qualityStatus": "OK",
+          "value": "OK"
+        },
+        "runFlat": {
+          "label": "Runflat",
+          "runFlat": true,
+          "value": "si"
+        },
+        "season": {
+          "label": "Temporada",
+          "season": "SUMMER",
+          "value": "verano"
+        },
+        "tread": {
+          "carcass": "RSC",
+          "label": "Dibujo",
+          "manufacturer": "Pirelli",
+          "treadDesign": "Cinturato P7",
+          "value": "Pirelli Cinturato P7"
+        },
+        "tyreDefect": {
+          "label": "Defectos",
+          "value": "sin defectos",
+          "status": "NO_DEFECT",
+          "statusColor": "GREEN"
+        },
+        "tyreProductionDate": {
+          "label": "Fabricacion",
+          "statusColor": "GREEN",
+          "value": "2023-W44"
+        },
+        "tyreWear": {
+          "label": "Desgaste",
+          "value": "normal",
+          "status": "OK",
+          "statusColor": "GREEN",
+          "dueMileage": 21000,
+          "unit": "KILOMETER"
+        }
+      },
+      "frontRight": {
+        "label": "Delantera derecha",
+        "dimension": {
+          "aspectRatio": 55,
+          "constructionType": "R",
+          "label": "Dimension",
+          "loadIndex": 95,
+          "rimDiameter": 18,
+          "sectionWidth": 225,
+          "speedRating": "V",
+          "value": "225/55 R18 95V"
+        },
+        "mountingDate": {
+          "label": "Fecha de montaje",
+          "mountingDate": "2024-02-27",
+          "value": "2024-02-27"
+        },
+        "optimizedForOem": {
+          "label": "OEM",
+          "optimizedForOem": "BMW",
+          "value": "*"
+        },
+        "partNumber": {
+          "label": "Numero de pieza",
+          "partNumber": "36112468543",
+          "value": "36112468543"
+        },
+        "qualityStatus": {
+          "label": "Calidad",
+          "qualityStatus": "OK",
+          "value": "OK"
+        },
+        "runFlat": {
+          "label": "Runflat",
+          "runFlat": true,
+          "value": "si"
+        },
+        "season": {
+          "label": "Temporada",
+          "season": "SUMMER",
+          "value": "verano"
+        },
+        "tread": {
+          "carcass": "RSC",
+          "label": "Dibujo",
+          "manufacturer": "Pirelli",
+          "treadDesign": "Cinturato P7",
+          "value": "Pirelli Cinturato P7"
+        },
+        "tyreDefect": {
+          "label": "Defectos",
+          "value": "sin defectos",
+          "status": "NO_DEFECT",
+          "statusColor": "GREEN"
+        },
+        "tyreProductionDate": {
+          "label": "Fabricacion",
+          "statusColor": "GREEN",
+          "value": "2023-W44"
+        },
+        "tyreWear": {
+          "label": "Desgaste",
+          "value": "normal",
+          "status": "OK",
+          "statusColor": "GREEN",
+          "dueMileage": 20500,
+          "unit": "KILOMETER"
+        }
+      },
+      "rearLeft": {
+        "label": "Trasera izquierda",
+        "dimension": {
+          "aspectRatio": 55,
+          "constructionType": "R",
+          "label": "Dimension",
+          "loadIndex": 95,
+          "rimDiameter": 18,
+          "sectionWidth": 225,
+          "speedRating": "V",
+          "value": "225/55 R18 95V"
+        },
+        "mountingDate": {
+          "label": "Fecha de montaje",
+          "mountingDate": "2024-02-27",
+          "value": "2024-02-27"
+        },
+        "optimizedForOem": {
+          "label": "OEM",
+          "optimizedForOem": "BMW",
+          "value": "*"
+        },
+        "partNumber": {
+          "label": "Numero de pieza",
+          "partNumber": "36112468543",
+          "value": "36112468543"
+        },
+        "qualityStatus": {
+          "label": "Calidad",
+          "qualityStatus": "OK",
+          "value": "OK"
+        },
+        "runFlat": {
+          "label": "Runflat",
+          "runFlat": true,
+          "value": "si"
+        },
+        "season": {
+          "label": "Temporada",
+          "season": "SUMMER",
+          "value": "verano"
+        },
+        "tread": {
+          "carcass": "RSC",
+          "label": "Dibujo",
+          "manufacturer": "Pirelli",
+          "treadDesign": "Cinturato P7",
+          "value": "Pirelli Cinturato P7"
+        },
+        "tyreDefect": {
+          "label": "Defectos",
+          "value": "sin defectos",
+          "status": "NO_DEFECT",
+          "statusColor": "GREEN"
+        },
+        "tyreProductionDate": {
+          "label": "Fabricacion",
+          "statusColor": "GREEN",
+          "value": "2023-W44"
+        },
+        "tyreWear": {
+          "label": "Desgaste",
+          "value": "normal",
+          "status": "OK",
+          "statusColor": "GREEN",
+          "dueMileage": 26000,
+          "unit": "KILOMETER"
+        }
+      },
+      "rearRight": {
+        "label": "Trasera derecha",
+        "dimension": {
+          "aspectRatio": 55,
+          "constructionType": "R",
+          "label": "Dimension",
+          "loadIndex": 95,
+          "rimDiameter": 18,
+          "sectionWidth": 225,
+          "speedRating": "V",
+          "value": "225/55 R18 95V"
+        },
+        "mountingDate": {
+          "label": "Fecha de montaje",
+          "mountingDate": "2024-02-27",
+          "value": "2024-02-27"
+        },
+        "optimizedForOem": {
+          "label": "OEM",
+          "optimizedForOem": "BMW",
+          "value": "*"
+        },
+        "partNumber": {
+          "label": "Numero de pieza",
+          "partNumber": "36112468543",
+          "value": "36112468543"
+        },
+        "qualityStatus": {
+          "label": "Calidad",
+          "qualityStatus": "OK",
+          "value": "OK"
+        },
+        "runFlat": {
+          "label": "Runflat",
+          "runFlat": true,
+          "value": "si"
+        },
+        "season": {
+          "label": "Temporada",
+          "season": "SUMMER",
+          "value": "verano"
+        },
+        "tread": {
+          "carcass": "RSC",
+          "label": "Dibujo",
+          "manufacturer": "Pirelli",
+          "treadDesign": "Cinturato P7",
+          "value": "Pirelli Cinturato P7"
+        },
+        "tyreDefect": {
+          "label": "Defectos",
+          "value": "sin defectos",
+          "status": "NO_DEFECT",
+          "statusColor": "GREEN"
+        },
+        "tyreProductionDate": {
+          "label": "Fabricacion",
+          "statusColor": "GREEN",
+          "value": "2023-W44"
+        },
+        "tyreWear": {
+          "label": "Desgaste",
+          "value": "normal",
+          "status": "OK",
+          "statusColor": "GREEN",
+          "dueMileage": 25800,
+          "unit": "KILOMETER"
+        }
+      }
+    }
+  },
+  "errors": []
+}

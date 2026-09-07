@@ -51,7 +51,11 @@ def _absence_notes(query: str) -> list[str]:
 def _render_hit(hit: SearchHit) -> str:
     """Render one search hit as a readable block."""
     entry = hit.entry
-    lines = [f"{entry.technical_descriptor}", f"  Nombre: {entry.name}", f"  Categoria: {entry.category}"]
+    lines = [
+        f"{entry.technical_descriptor}",
+        f"  Nombre: {entry.name}",
+        f"  Categoria: {entry.category}",
+    ]
     if entry.description:
         lines.append(f"  Descripcion: {entry.description}")
     detail = []

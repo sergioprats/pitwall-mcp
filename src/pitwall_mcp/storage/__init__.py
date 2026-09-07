@@ -5,7 +5,7 @@ from __future__ import annotations
 from .cache import CacheEntry, CacheStore
 from .db import Database, parse_iso, to_iso, utc_now
 from .history import HistoryStore, Reading
-from .quota import QuotaExceededError, QuotaStore, QuotaStatus
+from .quota import QuotaExceededError, QuotaStatus, QuotaStore
 
 __all__ = [
     "CacheEntry",

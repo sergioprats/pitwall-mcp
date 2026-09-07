@@ -1,0 +1,6 @@
+{
+  "exveErrorId": "CU-403",
+  "exveErrorRef": "0b2e77aa-0000-4c31-8d55-000000000000",
+  "exveErrorMsg": "Insufficient scope: cardata:api:read is required for this resource.",
+  "exveNote": "Authorize the missing scope in the CarData portal."
+}

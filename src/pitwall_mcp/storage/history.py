@@ -127,7 +127,11 @@ class HistoryStore:
             (vin,),
         ).fetchall()
         return {
-            row["descriptor"]: (int(row["n"]), parse_iso(row["first_at"]), parse_iso(row["last_at"]))
+            row["descriptor"]: (
+                int(row["n"]),
+                parse_iso(row["first_at"]),
+                parse_iso(row["last_at"]),
+            )
             for row in rows
         }
 

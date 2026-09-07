@@ -38,8 +38,14 @@ def require_ready(settings: Settings, *, needs_vin: bool = False, needs_containe
         raise errors.missing_container()
 
 
-def pending(tool: str, settings: Settings, *, needs_vin: bool = False, needs_container: bool = False,
-            note: str | None = None) -> str:
+def pending(
+    tool: str,
+    settings: Settings,
+    *,
+    needs_vin: bool = False,
+    needs_container: bool = False,
+    note: str | None = None,
+) -> str:
     """Return the message a not-yet-implemented tool answers with.
 
     If something is missing (credentials, VIN, container) that error wins,

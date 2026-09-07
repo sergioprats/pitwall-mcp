@@ -79,7 +79,14 @@ class Database:
         self.path = Path(path)
         if str(self.path) != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.connection = sqlite3.connect(str(self.path), isolation_level=None)
+        # `check_same_thread=False`: the MCP runtime may dispatch a synchronous
+        # tool onto a worker thread, so the connection has to outlive the thread
+        # that opened it. Access stays effectively serialized (one local user,
+        # autocommit, tiny indexed queries), and Python's sqlite3 is built in
+        # serialized threading mode.
+        self.connection = sqlite3.connect(
+            str(self.path), isolation_level=None, check_same_thread=False
+        )
         self.connection.row_factory = sqlite3.Row
         self._apply_schema()
 

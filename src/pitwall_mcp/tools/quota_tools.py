@@ -14,7 +14,7 @@ from ..cardata.client import (
     CarDataAdapter,
 )
 from ..config import TTLS, Settings
-from ..formatting import format_moment
+from ..formatting import format_moment, format_ttl
 from ..storage.db import utc_now
 
 _ENDPOINT_LABELS = {
@@ -68,7 +68,7 @@ def get_api_quota(adapter: CarDataAdapter, settings: Settings) -> str:
             container_id=container if endpoint == ENDPOINT_TELEMATIC else "",
         )
         ttl = TTLS.get(endpoint)
-        ttl_text = f"TTL {ttl}" if ttl else "sin TTL definido"
+        ttl_text = f"TTL {format_ttl(ttl)}" if ttl else "sin TTL definido"
         if entry is None:
             lines.append(f"  - {label}: sin datos en cache ({ttl_text}).")
             continue

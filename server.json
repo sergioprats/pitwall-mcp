@@ -1,0 +1,69 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.panesoft/pitwall-mcp",
+  "description": "Servidor MCP de solo lectura sobre la API BMW CarData: mantenimiento, neumaticos y bateria de 12V. Proyecto no afiliado a BMW AG.",
+  "status": "active",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/panesoft/pitwall-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/panesoft/pitwall-mcp",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "pitwall-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "PITWALL_CLIENT_ID",
+          "description": "Client id de tu aplicacion BMW CarData, creada en https://bmw-cardata.bmwgroup.com. Se obtiene en el portal; no lo comparte nadie contigo.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "PITWALL_VIN",
+          "description": "VIN del vehiculo, 17 caracteres. Debe estar mapeado como PRIMARY en la cuenta.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "PITWALL_CONTAINER_ID",
+          "description": "Id del contenedor telematico creado por scripts/bootstrap_containers.py. El servidor solo lo consume: nunca crea ni borra contenedores.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "PITWALL_TOKEN_FILE",
+          "description": "Ruta del fichero de tokens OAuth. Por defecto ~/.config/pitwall-mcp/tokens.json, con permisos 600 y fuera del repositorio.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PITWALL_DB_PATH",
+          "description": "Ruta de la base SQLite con la cache, el registro de cuota y el historico. Por defecto ~/.local/share/pitwall-mcp/pitwall.db.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PITWALL_DAILY_QUOTA",
+          "description": "Tope duro de peticiones REST al dia. BMW permite 50 cada 24 h por cuenta; el valor por defecto es 20 para dejar margen. Nunca puede superar 50.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "20"
+        },
+        {
+          "name": "PITWALL_LOG_LEVEL",
+          "description": "DEBUG, INFO, WARNING o ERROR. Los logs van a stderr: stdout es el canal MCP.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "INFO"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "telematicData": {
+    "vehicle.vehicle.travelledDistance": {
+      "value": "18342.0",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.vehicle.averageWeeklyDistanceShortTerm": {
+      "value": "112.0",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.vehicle.averageWeeklyDistanceLongTerm": {
+      "value": "148.0",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.status.serviceDistance.next": {
+      "value": "11700",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.status.serviceTime.inspectionDateLegal": {
+      "value": "28.02.2028 00:00 UTC",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.status.conditionBasedServicesCount": {
+      "value": "3",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.status.conditionBasedServicesAverageDistancePerDay": {
+      "value": "21",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.status.serviceDistance.yellow": {
+      "value": "2000",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "km"
+    },
+    "vehicle.status.serviceTime.yellow": {
+      "value": "4",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "weeks"
+    },
+    "vehicle.status.serviceTime.hUandAuServiceYellow": {
+      "value": "2",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "months"
+    },
+    "vehicle.electricalSystem.battery.stateOfCharge": {
+      "value": "74",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "%"
+    },
+    "vehicle.electricalSystem.battery.stateOfChargePlausibility": {
+      "value": "true",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.electricalSystem.battery.voltage": {
+      "value": "12.4",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "V"
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.recharge": {
+      "value": "0",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.replace": {
+      "value": "200",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.vehicle.deepSleepModeActive": {
+      "value": "true",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.drivetrain.engine.isIgnitionOn": {
+      "value": "ASN_isFalse",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.drivetrain.engine.isActive": {
+      "value": "ASN_isFalse",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressure": {
+      "value": "241",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressure": {
+      "value": "238",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressure": {
+      "value": "252",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressure": {
+      "value": "249",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressureTarget": {
+      "value": "250",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressureTarget": {
+      "value": "250",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressureTarget": {
+      "value": "250",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressureTarget": {
+      "value": "250",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "kPa"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.temperature": {
+      "value": "17.5",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "Celsius"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.temperature": {
+      "value": "17.5",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "Celsius"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.temperature": {
+      "value": "17.5",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "Celsius"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.temperature": {
+      "value": "17.5",
+      "timestamp": "2026-09-05T07:41:12Z",
+      "unit": "Celsius"
+    },
+    "vehicle.status.conditionBasedServices": {
+      "value": "ESTRUCTURA DESCONOCIDA - pendiente de una llamada real (riesgo 1)",
+      "timestamp": "2026-09-05T07:41:12Z"
+    },
+    "vehicle.status.checkControlMessages": {
+      "value": "0",
+      "timestamp": "2026-09-05T07:41:12Z"
+    }
+  }
+}

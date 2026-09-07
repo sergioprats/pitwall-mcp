@@ -148,18 +148,34 @@ def build_pressure(label: str, pressure: str | None, target: str | None) -> Pres
 
 
 def humanize_age(seconds: float) -> str:
-    """Render an age in Spanish, coarsely: minutes, hours or days."""
-    seconds = max(0, int(seconds))
+    """Render an age in Spanish, coarsely: minutes, hours or days.
+
+    A negative age is a moment in the future (the quota reset, a cache expiry)
+    and reads as "dentro de", not as "hace".
+    """
+    future = seconds < 0
+    seconds = abs(int(seconds))
+    prefix = "dentro de" if future else "hace"
     if seconds < 90:
-        return "hace menos de 2 minutos"
+        return f"{prefix} menos de 2 minutos"
     minutes = seconds // 60
     if minutes < 90:
-        return f"hace {minutes} minutos"
+        return f"{prefix} {minutes} minutos"
     hours = minutes // 60
     if hours < 48:
-        return f"hace {hours} horas"
+        return f"{prefix} {hours} horas"
     days = hours // 24
-    return f"hace {days} dias"
+    return f"{prefix} {days} dias"
+
+
+def format_ttl(ttl) -> str:  # noqa: ANN001 - timedelta
+    """Render a TTL as plain Spanish: hours or days, not `30 days, 0:00:00`."""
+    total = int(ttl.total_seconds())
+    if total % 86400 == 0:
+        days = total // 86400
+        return f"{days} dia" if days == 1 else f"{days} dias"
+    hours = total // 3600
+    return f"{hours} h"
 
 
 def format_moment(moment: datetime | str | None, *, now: datetime | None = None) -> str:
