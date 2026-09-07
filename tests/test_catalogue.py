@@ -51,8 +51,26 @@ def test_electric_descriptors_are_hidden_by_default(catalogue):
 
 def test_unknown_descriptor_returns_nothing(catalogue):
     """Something that does not exist finds nothing; it is not approximated."""
-    assert catalogue.search("iStep firmware version") == []
+    result = catalogue.search("iStep firmware version")
+    assert result.hits == []
+    assert result.ignored_terms == ["istep", "firmware", "version"]
     assert catalogue.get("vehicle.software.version") is None
+
+
+def test_a_word_nobody_uses_does_not_empty_a_good_query(catalogue):
+    """"bateria 12v voltaje" is a fair question and must not answer "no existe"."""
+    result = catalogue.search("bateria 12v voltaje")
+    assert result.ignored_terms == ["12v"]
+    assert result.hits[0].entry.technical_descriptor == (
+        "vehicle.electricalSystem.battery.voltage"
+    )
+
+
+def test_the_tool_admits_which_words_it_ignored(catalogue):
+    """The answer says what it actually searched for."""
+    text = catalogue_tools.search_descriptors(catalogue, "bateria 12v voltaje")
+    assert "Se han ignorado estas palabras" in text
+    assert "12v" in text
 
 
 def test_search_tool_says_a_missing_thing_is_missing(catalogue):
@@ -82,3 +100,10 @@ def test_emergency_lights_and_tilt_are_reported_as_absent(catalogue):
     tilt = catalogue_tools.search_descriptors(catalogue, "inclinacion al aparcar")
     assert "NO existe" in lights
     assert "NO existe" in tilt
+
+
+def test_stopwords_do_not_drag_in_the_whole_catalogue(catalogue):
+    """"version de software" must find nothing, not 20 hits on the word "de"."""
+    result = catalogue.search("version de software")
+    assert result.hits == []
+    assert "de" not in result.ignored_terms

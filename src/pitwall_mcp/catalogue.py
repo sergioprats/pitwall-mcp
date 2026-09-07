@@ -66,6 +66,17 @@ _SPANISH_SYNONYMS: Final[dict[str, tuple[str, ...]]] = {
     "voltaje": ("voltage",),
 }
 
+#: Words carrying no search value. They are dropped silently: matching on "de"
+#: would let a query like "version de software" hit half the catalogue and
+#: answer with 20 irrelevant descriptors instead of admitting it found nothing.
+_STOPWORDS: Final[frozenset[str]] = frozenset(
+    {
+        "a", "al", "con", "de", "del", "e", "el", "en", "la", "las", "lo", "los",
+        "o", "para", "por", "que", "se", "su", "sus", "un", "una", "unos", "unas", "y",
+        "and", "for", "in", "of", "on", "or", "the", "to",
+    }
+)
+
 #: Accent folding, so "presión" and "sueño" behave like "presion" and "sueno".
 _ACCENTS = str.maketrans("áàäâéèëêíìïîóòöôúùüûñç", "aaaaeeeeiiiioooouuuunc")
 
@@ -130,6 +141,31 @@ class SearchHit:
     score: int
 
 
+@dataclass(frozen=True)
+class SearchResult:
+    """The ranked hits, plus the query words that had to be ignored.
+
+    A word nobody in the catalogue uses (a model year, "12v", a typo) must not
+    silently turn a good query into "eso no existe". It is dropped from the
+    match and reported, so the answer says what it actually searched for.
+    """
+
+    hits: list[SearchHit]
+    ignored_terms: list[str]
+
+    def __iter__(self):
+        """Iterate over the hits."""
+        return iter(self.hits)
+
+    def __len__(self) -> int:
+        """Number of hits."""
+        return len(self.hits)
+
+    def __getitem__(self, index):
+        """Index into the hits."""
+        return self.hits[index]
+
+
 class Catalogue:
     """In-memory view of the telematic catalogue."""
 
@@ -138,6 +174,7 @@ class Catalogue:
         self.source = source
         self.entries = entries
         self._by_descriptor = {entry.technical_descriptor: entry for entry in entries}
+        self._haystacks: dict[str, str] = {}
 
     # -- Loading ------------------------------------------------------------
 
@@ -192,7 +229,7 @@ class Catalogue:
         *,
         limit: int = 20,
         include_electric: bool = False,
-    ) -> list[SearchHit]:
+    ) -> SearchResult:
         """Rank catalogue entries against a free-text query.
 
         Matching is deliberately simple and explainable: exact descriptor first,
@@ -200,11 +237,28 @@ class Catalogue:
         must appear somewhere in the entry, so a two-word query narrows instead
         of widening. Spanish terms are expanded to their English equivalents
         before matching.
+
+        A term that appears in NO entry at all is dropped rather than allowed to
+        empty the result: otherwise "bateria 12v voltaje" would answer "no
+        existe" about a descriptor that plainly does.
         """
         normalised = _normalise(query)
-        terms = [_expand(term) for term in _WORD_RE.findall(normalised)]
+        words = _WORD_RE.findall(normalised)
+        if not words:
+            return SearchResult(hits=[], ignored_terms=[])
+
+        terms: list[tuple[str, ...]] = []
+        ignored: list[str] = []
+        for word in words:
+            if word in _STOPWORDS:
+                continue
+            alternatives = _expand(word)
+            if self._appears_anywhere(alternatives):
+                terms.append(alternatives)
+            else:
+                ignored.append(word)
         if not terms:
-            return []
+            return SearchResult(hits=[], ignored_terms=ignored)
 
         hits: list[SearchHit] = []
         for entry in self.entries:
@@ -222,7 +276,24 @@ class Catalogue:
                 hit.entry.technical_descriptor,
             )
         )
-        return hits[:limit]
+        return SearchResult(hits=hits[:limit], ignored_terms=ignored)
+
+    def _appears_anywhere(self, alternatives: tuple[str, ...]) -> bool:
+        """True when any alternative occurs in any entry of the whole catalogue."""
+        return any(
+            any(alt in self._haystack(entry) for alt in alternatives)
+            for entry in self.entries
+        )
+
+    def _haystack(self, entry: CatalogueEntry) -> str:
+        """Normalised searchable text of one entry, computed once per entry."""
+        cached = self._haystacks.get(entry.technical_descriptor)
+        if cached is None:
+            cached = _normalise(
+                f"{entry.technical_descriptor} {entry.name} {entry.description}"
+            )
+            self._haystacks[entry.technical_descriptor] = cached
+        return cached
 
 
 def _score(entry: CatalogueEntry, query: str, terms: list[tuple[str, ...]]) -> int:

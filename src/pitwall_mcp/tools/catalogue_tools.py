@@ -106,8 +106,10 @@ def search_descriptors(
             f"{len(catalogue)} descriptores en {len(catalogue.categories)} categorias."
         )
 
-    hits = catalogue.search(query, limit=limit, include_electric=include_electric)
+    result = catalogue.search(query, limit=limit, include_electric=include_electric)
+    hits = result.hits
     notes = _absence_notes(query)
+    ignored = result.ignored_terms
 
     header = (
         f"Busqueda en el catalogo telematico local ({len(catalogue)} descriptores). "
@@ -121,6 +123,11 @@ def search_descriptors(
             "Que significa: ese descriptor NO existe en el catalogo de BMW. No es que este "
             "vehiculo no lo emita; es que no es un descriptor valido y no se puede pedir.",
         ]
+        if ignored:
+            body.append(
+                "\nNinguna de estas palabras aparece en ningun descriptor del "
+                "catalogo: " + ", ".join(ignored) + "."
+            )
         body.extend(f"\n{note}" for note in notes)
         if not include_electric:
             body.append(
@@ -131,6 +138,13 @@ def search_descriptors(
 
     blocks = [_render_hit(hit) for hit in hits]
     footer = []
+    if ignored:
+        footer.append(
+            "\nSe han ignorado estas palabras, porque no aparecen en ningun "
+            "descriptor del catalogo: "
+            + ", ".join(ignored)
+            + ". La busqueda se ha hecho sin ellas."
+        )
     if notes:
         footer.append("")
         footer.extend(notes)
