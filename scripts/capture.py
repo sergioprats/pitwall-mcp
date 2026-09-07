@@ -286,7 +286,7 @@ async def run(args: argparse.Namespace) -> int:
             result = await adapter.get_basic_data(_require_vin(settings))
         elif action == "telematic":
             result = await adapter.get_telematic_data(
-                _require_vin(settings), _require_container(settings)
+                _require_vin(settings), _require_container(settings), force=args.force
             )
         else:
             result = await adapter.get_tyre_diagnosis(_require_vin(settings))
@@ -373,6 +373,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--fixture",
         metavar="NOMBRE",
         help="ademas, escribe una copia anonimizada en tests/fixtures/NOMBRE.json",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "ignora el TTL de cache y pide el contenedor de nuevo (GASTA 1 PETICION). "
+            "Solo --telematic. Util para leer justo despues de aparcar."
+        ),
     )
     parser.add_argument(
         "--out", default="captures", help="directorio de capturas crudas (por defecto: captures)"

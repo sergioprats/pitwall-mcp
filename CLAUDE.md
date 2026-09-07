@@ -406,9 +406,8 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
 5. **Reset de cuota**: huso horario desconocido.
 6. **`conditionBasedServicesCount` no cuadra con el array**: devolvió 9 con 5
    partidas. Sin explicación. No se inventa una.
-7. **Desfase de reloj de BMW**: una lectura traía un `timestamp` un minuto en
-   el futuro. Los cálculos de antigüedad tienen que tolerar valores negativos
-   sin presentarlos como "hace un momento".
+7. ~~Desfase de reloj de BMW.~~ **EXPLICADO el 2026-09-07**: no es desfase. Ver
+   "Timestamps de petición" abajo.
 8. **`/basicData` no coincide con el swagger.** Este vehículo no devuelve
    `vin`, `puStep`, `isTelematicsCapable` ni `modelRange`, y en cambio devuelve
    `seriesDevt`, `colourDescription` y `countryCode`, que el swagger no
@@ -417,3 +416,31 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
 9. **El diagnóstico de neumáticos viene vacío**: estructura completa, valores a
    cero, `errors: []`. Probablemente requiere que los neumáticos estén
    registrados en el sistema de BMW. Los ceros son relleno, no medidas.
+10. **Los 11 campos vacíos siguen vacíos con el coche recién aparcado.** Dos
+    lecturas separadas 32 minutos, ambas con el coche parado desde hacía ~1 h:
+    ninguno se rellenó. **Sigue sin probarse** qué pasa con el contacto dado o
+    en marcha, que es la única condición que queda por probar.
+
+---
+
+## Timestamps de petición, no de medida
+
+Verificado el 2026-09-07 comparando dos lecturas consecutivas.
+
+**No todos los `timestamp` significan lo mismo.**
+`battery.serviceDemand.recharge` y `.replace` vinieron sellados con el momento
+de **nuestra propia petición**, al milisegundo (`21:35:06.005Z` para una llamada
+hecha a las 21:35:06). `travelledDistance`, en cambio, traía el momento de la
+medida real (20:40), idéntico en ambas lecturas.
+
+Esto explica el "timestamp un minuto en el futuro" que veíamos: es el reloj del
+servidor de BMW, no un desfase del vehículo.
+
+**Consecuencia grave para el histórico.** El índice único de `readings` incluye
+`source_timestamp`, así que esos dos descriptores **generan una fila nueva en
+cada lectura aunque el valor no se mueva**. Contar filas sobrestimaría la
+evidencia: diez llamadas en una tarde parecerían diez observaciones de una
+batería medida una sola vez.
+
+Por eso **todo lo que razone sobre tendencias usa `HistoryStore.changes()`**, que
+colapsa repeticiones consecutivas, y nunca `series()` a secas.

@@ -115,3 +115,49 @@ def test_stats_report_how_much_evidence_exists(db):
     count, first, last = stats[TRAVELLED_DISTANCE]
     assert count == 1
     assert first == last == NOON
+
+
+def test_repeated_values_collapse_into_one_change(db):
+    """Some descriptors are stamped at REQUEST time, not at measurement time.
+
+    `battery.serviceDemand.replace` gets a new timestamp on every call even when
+    the reading never moved, so counting rows would overstate the evidence.
+    """
+    store = HistoryStore(db)
+    descriptor = "vehicle.electricalSystem.battery.serviceDemand.replace"
+    for minute, stamp in enumerate(
+        ["2026-09-07T21:35:06.005Z", "2026-09-07T22:07:26.877Z", "2026-09-07T23:01:00.000Z"]
+    ):
+        store.record(
+            FAKE_VIN,
+            {descriptor: {"value": "200", "unit": None, "timestamp": stamp}},
+            moment=NOON + timedelta(minutes=minute),
+        )
+
+    assert len(store.series(FAKE_VIN, descriptor)) == 3
+    assert len(store.changes(FAKE_VIN, descriptor)) == 1
+
+
+def test_a_real_change_survives_the_collapse(db):
+    """Collapsing repetitions must not hide the transition we are looking for."""
+    store = HistoryStore(db)
+    for day, value in enumerate(["200", "200", "140", "140", "110"]):
+        store.record(
+            FAKE_VIN,
+            {
+                BATTERY_VOLTAGE: {
+                    "value": value,
+                    "unit": None,
+                    "timestamp": f"2026-09-0{day + 1}T07:00:00Z",
+                }
+            },
+            moment=NOON + timedelta(days=day),
+        )
+
+    changes = store.changes(FAKE_VIN, BATTERY_VOLTAGE)
+    assert [reading.value for reading in changes] == ["200", "140", "110"]
+
+
+def test_collapsing_an_empty_series_is_safe(db):
+    """Nothing recorded means nothing to collapse, not an error."""
+    assert HistoryStore(db).changes(FAKE_VIN, TRAVELLED_DISTANCE) == []

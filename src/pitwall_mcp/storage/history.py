@@ -110,6 +110,28 @@ class HistoryStore:
         series = self.series(vin, descriptor, limit=1)
         return series[-1] if series else None
 
+    def changes(self, vin: str, descriptor: str, *, limit: int = 200) -> list[Reading]:
+        """Return the series with consecutive repetitions collapsed away.
+
+        SOME DESCRIPTORS ARE STAMPED AT REQUEST TIME, NOT AT MEASUREMENT TIME.
+        Verified on 2026-09-07: `battery.serviceDemand.recharge` and `.replace`
+        came back with a timestamp matching our own call to the millisecond,
+        while `travelledDistance` carried the moment of the actual measurement.
+
+        Because the unique index includes `source_timestamp`, those two get a
+        fresh row on every single read even when the value never moved. Counting
+        rows would therefore overstate the evidence: ten calls in one afternoon
+        would look like ten observations of a battery that was measured once.
+
+        Anything reasoning about trends must use this, not `series`.
+        """
+        readings = self.series(vin, descriptor, limit=limit)
+        collapsed: list[Reading] = []
+        for reading in readings:
+            if not collapsed or collapsed[-1].value != reading.value:
+                collapsed.append(reading)
+        return collapsed
+
     def descriptor_stats(self, vin: str) -> dict[str, tuple[int, datetime | None, datetime | None]]:
         """Return `{descriptor: (count, first recorded_at, last recorded_at)}`.
 

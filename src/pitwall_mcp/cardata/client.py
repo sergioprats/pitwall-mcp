@@ -112,7 +112,9 @@ class CarDataAdapter:
 
         return await self._fetch(ENDPOINT_BASIC_DATA, fetch, vin=vin)
 
-    async def get_telematic_data(self, vin: str, container_id: str) -> ApiResult:
+    async def get_telematic_data(
+        self, vin: str, container_id: str, *, force: bool = False
+    ) -> ApiResult:
         """`GET /customers/vehicles/{vin}/telematicData` for one container.
 
         Successful responses are also appended to the local history, because
@@ -123,7 +125,7 @@ class CarDataAdapter:
             return (await client.get_telematic_data(vin, container_id)).raw_data
 
         result = await self._fetch(
-            ENDPOINT_TELEMATIC, fetch, vin=vin, container_id=container_id
+            ENDPOINT_TELEMATIC, fetch, vin=vin, container_id=container_id, force=force
         )
         if result.source == "api":
             self._store_history(vin, result.payload)
@@ -185,10 +187,23 @@ class CarDataAdapter:
         *,
         vin: str = "",
         container_id: str = "",
+        force: bool = False,
     ) -> ApiResult:
-        """Serve from cache, or spend one request if the quota guard allows it."""
+        """Serve from cache, or spend one request if the quota guard allows it.
+
+        `force` skips the TTL and nothing else: the quota guard still decides,
+        and the request is still logged. It exists because the TTL is a cost
+        guard, not a correctness one, and there are moments worth one request
+        out of fifty (reading right after the car is parked, say). It is NOT
+        reachable from any MCP tool; only `scripts/capture.py` passes it, run by
+        hand, so a model can never spend the budget by deciding data looks old.
+        """
         now = utc_now()
-        fresh = self._cache.get(endpoint, vin=vin, container_id=container_id, moment=now)
+        fresh = (
+            None
+            if force
+            else self._cache.get(endpoint, vin=vin, container_id=container_id, moment=now)
+        )
         if fresh is not None:
             _LOGGER.debug("cache hit %s vin=%s container=%s", endpoint, vin, container_id)
             return ApiResult(
