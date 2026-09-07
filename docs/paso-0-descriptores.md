@@ -154,9 +154,10 @@ que tiene endpoint propio y que `/telematicData` no devuelve.
 Con un TTL de 12 h, una sola peticion trae kilometraje, CBS, bateria, presiones y
 estado de sueno: **2 peticiones al dia** de las 20 del tope local.
 
-No se sabe si BMW limita el numero de descriptores por contenedor. Si el `POST`
-falla por tamano, hay que partirlo en dos y cada lectura pasara a costar 2
-peticiones; hay que reflejarlo en el presupuesto de cuota.
+**RESUELTO el 2026-09-07 con un `POST` real:** BMW acepto los 32 descriptores
+de una vez, sin limite de tamano. No hay que partir el contenedor, y cada
+lectura del contenedor cuesta **1 peticion**, como estaba presupuestado.
+El `containerId` que devuelve no es un UUID: son 13 caracteres alfanumericos.
 
 Para verlo exactamente como se enviaria, sin enviar nada:
 

@@ -27,7 +27,7 @@ CATALOGUE_PATH = REPO_ROOT / "spec" / "telematic_catalogue.json"
 
 #: The VIN used across every fixture. Obviously fake, never a real vehicle.
 FAKE_VIN = "WBAU11030P0FAKE01"
-FAKE_CONTAINER = "11111111-2222-3333-4444-555555555555"
+FAKE_CONTAINER = "B00FAKE0CONT1"  # forma real: 13 alfanumericos, no un UUID
 
 
 def load_fixture(name: str):

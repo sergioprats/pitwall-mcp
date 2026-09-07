@@ -51,6 +51,8 @@ from pitwall_mcp.storage.db import Database, to_iso, utc_now  # noqa: E402
 #: The placeholder every committed fixture uses instead of a real VIN.
 FIXTURE_VIN = "WBAU11030P0FAKE01"
 FIXTURE_GCID = "gcid-de-prueba"
+#: Forma real observada: 13 caracteres alfanumericos, no un UUID.
+FIXTURE_CONTAINER = "B00FAKE0CONT1"
 
 
 # --- Anonymisation ---------------------------------------------------------
@@ -84,7 +86,7 @@ def build_replacements(settings, payload: Any) -> dict[str, str]:  # noqa: ANN00
     if settings.vin:
         replacements[settings.vin] = FIXTURE_VIN
     if settings.container_id:
-        replacements[settings.container_id] = "11111111-2222-3333-4444-555555555555"
+        replacements[settings.container_id] = FIXTURE_CONTAINER
 
     # A mappings response carries VINs we may not have configured yet.
     for vin in _vins_in(payload):
