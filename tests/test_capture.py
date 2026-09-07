@@ -107,30 +107,56 @@ def test_the_telematic_report_names_what_did_not_arrive(capsys, settings):
     capture.report_telematic(load_fixture("telematic_partial.json"), settings)
     out = capsys.readouterr().out
 
-    assert "Descriptores pedidos : 32" in out
-    assert "Descriptores llegados: 4" in out
-    assert "Descriptores ausentes: 28" in out
+    assert "Descriptores pedidos    : 32" in out
+    assert "Con valor               : 4" in out
+    assert "Ausentes de la respuesta: 28" in out
     assert "vehicle.electricalSystem.battery.voltage" in out
     assert "no disponible para este" in out  # the rule 6 explanation
 
 
-def test_the_report_highlights_the_cbs_risk_when_it_is_absent(capsys, settings):
-    """Risk number one deserves its own verdict, not a line in a list."""
+def test_an_empty_value_is_not_counted_as_data(capsys, settings):
+    """A key can arrive with `value: null`. Present is not the same as useful.
+
+    The real U11 answered with all 32 keys but only 21 values; reporting 32
+    would have overstated what we actually know.
+    """
+    capture.report_telematic(load_fixture("telematic_real.json"), settings)
+    out = capsys.readouterr().out
+
+    assert "Con valor               : 21" in out
+    assert "Presentes pero VACIOS   : 11" in out
+    assert "Ausentes de la respuesta: 0" in out
+    assert "PRESENTES PERO VACIOS" in out
+    assert "vehicle.vehicle.deepSleepModeActive" in out
+
+
+def test_the_report_says_so_when_cbs_is_absent(capsys, settings):
+    """Without the breakdown the only honest fallback is the global figure."""
     capture.report_telematic(load_fixture("telematic_partial.json"), settings)
     out = capsys.readouterr().out
 
-    assert "RIESGO" in out
-    assert "NO ha llegado" in out
+    assert "NO ha llegado con valor" in out
     assert "serviceDistance.next" in out
 
 
-def test_the_report_dumps_the_cbs_structure_when_it_arrives(capsys, settings):
-    """If it does come back, we want the raw shape, uninterpreted."""
-    capture.report_telematic(load_fixture("telematic_full.json"), settings)
+def test_the_report_decodes_the_double_encoded_cbs(capsys, settings):
+    """Its `value` is a STRING containing JSON: one decode is not enough."""
+    capture.report_telematic(load_fixture("telematic_real.json"), settings)
     out = capsys.readouterr().out
 
-    assert "SI ha llegado" in out
-    assert "ESTRUCTURA DESCONOCIDA" in out  # the placeholder in our fixture
+    assert "5 partida(s)" in out
+    assert "Engine oil" in out
+    assert "Front Brake" in out
+    assert "es un centinela" in out  # "null" and "-" are flagged, not parsed
+
+
+def test_the_report_flags_the_count_discrepancy(capsys, settings):
+    """The counter said 9 while the array held 5. Report both, explain neither."""
+    capture.report_telematic(load_fixture("telematic_real.json"), settings)
+    out = capsys.readouterr().out
+
+    assert "DISCREPANCIA" in out
+    assert "Se reportan ambos" in out
 
 
 def test_the_mappings_report_flags_a_non_primary_vin(capsys):

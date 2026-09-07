@@ -127,21 +127,36 @@ def report_telematic(payload: Any, settings) -> None:  # noqa: ANN001
         return
 
     catalogue = load_catalogue(settings.catalogue_path)
-    arrived = [d for d in CONTAINER_DESCRIPTORS if d in entries]
+
+    def has_value(descriptor: str) -> bool:
+        """A key can arrive with `value: null`: present is not the same as useful."""
+        entry = entries.get(descriptor)
+        return isinstance(entry, dict) and entry.get("value") is not None
+
+    arrived = [d for d in CONTAINER_DESCRIPTORS if d in entries and has_value(d)]
+    empty = [d for d in CONTAINER_DESCRIPTORS if d in entries and not has_value(d)]
     missing = [d for d in CONTAINER_DESCRIPTORS if d not in entries]
     extra = [d for d in entries if d not in CONTAINER_DESCRIPTORS]
 
     print()
-    print(f"Descriptores pedidos : {len(CONTAINER_DESCRIPTORS)}")
-    print(f"Descriptores llegados: {len(arrived)}")
-    print(f"Descriptores ausentes: {len(missing)}")
+    print(f"Descriptores pedidos    : {len(CONTAINER_DESCRIPTORS)}")
+    print(f"Con valor               : {len(arrived)}")
+    print(f"Presentes pero VACIOS   : {len(empty)}   (value: null)")
+    print(f"Ausentes de la respuesta: {len(missing)}")
     if extra:
         print(f"Descriptores NO pedidos que ha devuelto BMW: {len(extra)}")
         for descriptor in extra:
             print(f"  ? {descriptor}")
 
+    if empty:
+        print()
+        print("PRESENTES PERO VACIOS (el vehiculo conoce el campo y no tiene lectura):")
+        for descriptor in empty:
+            unit = entries[descriptor].get("unit") or "sin unidad"
+            print(f"  o {descriptor}  [{unit}]")
+
     print()
-    print("LLEGADOS:")
+    print("CON VALOR:")
     for descriptor in arrived:
         entry = entries[descriptor] if isinstance(entries[descriptor], dict) else {}
         value = entry.get("value")
@@ -169,20 +184,41 @@ def report_telematic(payload: Any, settings) -> None:  # noqa: ANN001
             )
         )
 
-    # The open risk of the whole project.
+    _report_cbs(entries)
+
+
+def _report_cbs(entries: dict) -> None:
+    """Decode and print the CBS block, the structure block A could not confirm."""
     cbs = entries.get("vehicle.status.conditionBasedServices")
+    count = entries.get("vehicle.status.conditionBasedServicesCount") or {}
+
     print()
     print("=" * 70)
-    print("RIESGO Nº 1: estructura de vehicle.status.conditionBasedServices")
+    print("CBS: vehicle.status.conditionBasedServices")
     print("=" * 70)
-    if cbs is None:
-        print("NO ha llegado. Confirmaria la sospecha de que esta ligado a un endpoint")
-        print("dedicado y /telematicData no lo devuelve. El desglose CBS por partida no")
-        print("seria posible por esta via, y get_vehicle_status tendria que quedarse con")
+    if cbs is None or cbs.get("value") is None:
+        print("NO ha llegado con valor en esta lectura. El desglose por partida no es")
+        print("posible aqui, y get_vehicle_status tendria que quedarse con")
         print("vehicle.status.serviceDistance.next.")
-    else:
-        print("SI ha llegado. Contenido crudo, sin interpretar:")
-        print(json.dumps(cbs, indent=2, ensure_ascii=False))
+        return
+
+    # Its `value` is a STRING containing JSON: a second decode is required.
+    try:
+        items = json.loads(cbs["value"])
+    except (TypeError, json.JSONDecodeError) as err:
+        print(f"El valor no se ha podido decodificar como JSON: {err}")
+        print(f"Crudo: {cbs['value']!r}")
+        return
+
+    print(f"{len(items)} partida(s). conditionBasedServicesCount dice: {count.get('value')!r}")
+    if count.get("value") and str(count["value"]).isdigit() and int(count["value"]) != len(items):
+        print("  DISCREPANCIA: el contador y el array no coinciden. Se reportan ambos.")
+    print()
+    for item in items:
+        print(f"  id={item.get('id')!r:<5} {item.get('title')}")
+        print(f"      status : {item.get('status')!r}")
+        print(f"      date   : {item.get('date')!r}   (la cadena 'null' es un centinela)")
+        print(f"      km     : {item.get('unitOfLengthRemaining')!r}   ('-' es un centinela)")
 
 
 def report_mappings(payload: Any) -> None:

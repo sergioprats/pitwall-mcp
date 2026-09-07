@@ -118,6 +118,35 @@ gasolina.
 | `vehicle.status.serviceTime.hUandAuServiceYellow` | umbral de preaviso ITV, meses | sí |
 | `vehicle.status.checkControlMessages` | mensajes Check Control | no |
 
+**Estructura de `conditionBasedServices`, verificada el 2026-09-07 con una
+llamada real.** Sí llega por `/telematicData`; la sospecha de que estuviera
+ligada a un endpoint dedicado era falsa.
+
+Su `value` es **una cadena que contiene JSON**: hace falta un **segundo
+`json.loads`** para llegar a un array de partidas con estas claves:
+
+```json
+{"date": "2027-07", "description": "Next service due when...", "id": 1,
+ "messageType": "CBS", "status": "OK", "title": "Engine oil",
+ "text": "-", "unitOfLengthRemaining": "14000"}
+```
+
+`id` es entero; **todo lo demás son cadenas**, incluidos los kilómetros. Tres
+valores centinela que no se pueden tratar como datos:
+
+- **`"date": "null"`** — la cadena literal de cuatro letras, no un `null` de
+  JSON. Parsearla como fecha produce basura.
+- **`"unitOfLengthRemaining": "-"`** cuando la partida solo tiene fecha.
+- **`"text": "-"`** cuando no hay texto.
+
+Partidas observadas en este U11: `Front Brake` (id 2), `Statutory vehicle
+inspection` (id 32), `Engine oil` (id 1), `Brake fluid` (id 3), `Vehicle check`
+(id 100).
+
+**Discrepancia sin explicar:** `conditionBasedServicesCount` devolvió **9**
+mientras el array traía **5** partidas. Se desconoce el motivo. Las herramientas
+dan los dos números y **no fingen que cuadran**.
+
 ### Neumáticos
 
 Presiones y temperaturas, las ocho + cuatro, todas streamable:
@@ -129,6 +158,29 @@ Presiones y temperaturas, las ocho + cuatro, todas streamable:
 Unidad **kPa** (0–1000), valor posible `-NA-` que debe tratarse
 explícitamente como "sin medida", nunca como cero. Se presenta al usuario
 en bar, junto al diferencial contra `pressureTarget`.
+
+### Tercer estado: presente y vacío
+
+Verificado el 2026-09-07: el contenedor devolvió **las 32 claves pedidas, pero
+solo 21 con valor**. Las otras 11 llegan con `"value": null` y
+`"timestamp": null`, conservando su `unit`.
+
+Son **tres estados distintos**, y confundirlos es mentir:
+
+1. **Ausente**: la clave no está en la respuesta.
+2. **Presente y vacío**: `value: null`. El vehículo conoce el campo pero no
+   tiene lectura.
+3. **`-NA-`**: el vehículo dice explícitamente "sin medida".
+
+En esta lectura llegaron vacíos: las cuatro `tire.temperature`,
+`battery.stateOfCharge`, `battery.stateOfChargePlausibility`,
+`deepSleepModeActive`, `isIgnitionOn`, `isActive`, `checkControlMessages` y
+`conditionBasedServicesAverageDistancePerDay`.
+
+**Consecuencia para `diagnose_software_update`:** `deepSleepModeActive` y
+`stateOfCharge` vinieron vacíos, así que ni la hipótesis del sueño profundo ni
+el estado de carga son observables en esa lectura. De la batería solo queda
+`voltage`, más `serviceDemand.recharge` y `.replace`.
 
 Diagnóstico: `vehicle.chassis.axle.wheel.tire.diagnosis` (no streamable)
 remite al endpoint `/smartMaintenanceTyreDiagnosis`. **Ese endpoint no
@@ -187,7 +239,7 @@ real.
 |---|---|---|
 | `list_vehicles()` | `/mappings` | confirmada |
 | `get_vehicle_basic_data(vin)` | `/basicData` | confirmada |
-| `get_vehicle_status(vin)` | `/telematicData` | **pendiente**: km sí; desglose CBS por partida depende de la estructura de `conditionBasedServices` |
+| `get_vehicle_status(vin)` | `/telematicData` | confirmada: km y desglose CBS por partida. La estructura de `conditionBasedServices` está verificada contra una respuesta real y grabada como fixture |
 | `get_tyre_diagnosis(vin)` | `/smartMaintenanceTyreDiagnosis` | confirmada, sin presiones |
 | `get_telematic_data(vin, container_id)` | `/telematicData` | confirmada |
 | `search_descriptors(query)` | catálogo local | confirmada, **no gasta cuota** |
@@ -280,9 +332,10 @@ descriptores confirmados arriba: una sola petición trae kilometraje, CBS,
 batería, presiones y estado de sueño. Con TTL de 12 h son 2 peticiones
 al día.
 
-No se sabe si BMW limita el número de descriptores por contenedor. Si el
-`POST` falla por tamaño, el script lo parte en dos y cada lectura pasa a
-costar 2 peticiones; hay que reflejarlo en el presupuesto de cuota.
+**Resuelto el 2026-09-07:** BMW aceptó los 32 descriptores en un solo `POST`,
+sin límite de tamaño. No hay que partir el contenedor y cada lectura cuesta
+**1 petición**, como estaba presupuestado. El `containerId` que devuelve no es
+un UUID: son 13 caracteres alfanuméricos.
 
 ---
 
@@ -336,16 +389,22 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
 
 ## Riesgos abiertos
 
-1. **Estructura de `vehicle.status.conditionBasedServices`**: no
-   documentada, y puede estar ligada a un endpoint dedicado y no llegar
-   por `/telematicData`. Es el riesgo número uno para el desglose CBS.
-   Se verifica con una única llamada real y se graba como fixture.
+1. ~~Estructura de `vehicle.status.conditionBasedServices`.~~ **CERRADO el
+   2026-09-07**: llega por `/telematicData`, su `value` es JSON dentro de una
+   cadena, y la estructura está documentada arriba y grabada como fixture.
 2. **`bmw-cardata` está en alfa** (0.1.0a3, junio 2026). Versión pinneada
    y adaptador propio obligatorio.
-3. **Cobertura real del U11**: qué descriptores emite de verdad este
-   coche solo se sabe llamando. Los que no lleguen se documentan como no
-   disponibles para este vehículo, no como inexistentes.
+3. **Cobertura real del U11**: parcialmente resuelto. Las 32 claves del
+   contenedor llegan, pero **11 vienen vacías** (ver "Tercer estado"). Queda
+   por saber si esos 11 se rellenan en otras condiciones —con el coche
+   despierto, recién apagado, en movimiento— o si este U11 no los emite nunca.
+   Solo se sabe repitiendo la lectura en circunstancias distintas.
 4. **`puStep` puede no moverse nunca** con las RSU. Si tras meses de
    histórico no cambia, se documenta como inútil para el diagnóstico en
    lugar de mantener la ficción.
 5. **Reset de cuota**: huso horario desconocido.
+6. **`conditionBasedServicesCount` no cuadra con el array**: devolvió 9 con 5
+   partidas. Sin explicación. No se inventa una.
+7. **Desfase de reloj de BMW**: una lectura traía un `timestamp` un minuto en
+   el futuro. Los cálculos de antigüedad tienen que tolerar valores negativos
+   sin presentarlos como "hace un momento".

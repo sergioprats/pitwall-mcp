@@ -1,0 +1,164 @@
+{
+  "telematicData": {
+    "vehicle.status.conditionBasedServices": {
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": null,
+      "value": "[{\"date\":\"null\",\"description\":\"Next change due at the latest when the stated distance has been covered.\",\"id\":2,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Front Brake\",\"text\":\"-\",\"unitOfLengthRemaining\":\"2100\"},{\"date\":\"2027-01\",\"description\":\"Next statutory vehicle inspection due by the stated date.\",\"id\":32,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Statutory vehicle inspection\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2027-07\",\"description\":\"Next service due when the stated distance has been covered or by the specified date.\",\"id\":1,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Engine oil\",\"text\":\"-\",\"unitOfLengthRemaining\":\"14000\"},{\"date\":\"2027-10\",\"description\":\"Next change due at the latest by the stated date.\",\"id\":3,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Brake fluid\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2029-07\",\"description\":\"-\",\"id\":100,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Vehicle check\",\"text\":\"-\",\"unitOfLengthRemaining\":\"45000\"}]"
+    },
+    "vehicle.electricalSystem.battery.stateOfChargePlausibility": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": "kPa",
+      "value": "250"
+    },
+    "vehicle.status.serviceDistance.yellow": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "2000"
+    },
+    "vehicle.electricalSystem.battery.voltage": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": "V",
+      "value": "14.39"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-07T20:40:07.000Z",
+      "unit": "kPa",
+      "value": "240"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": "kPa",
+      "value": "250"
+    },
+    "vehicle.electricalSystem.battery.stateOfCharge": {
+      "timestamp": null,
+      "unit": "%",
+      "value": null
+    },
+    "vehicle.drivetrain.engine.isActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.conditionBasedServicesCount": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "9"
+    },
+    "vehicle.status.serviceDistance.next": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "2140"
+    },
+    "vehicle.status.conditionBasedServicesAverageDistancePerDay": {
+      "timestamp": null,
+      "unit": "km",
+      "value": null
+    },
+    "vehicle.vehicle.travelledDistance": {
+      "timestamp": "2026-09-07T20:40:07.000Z",
+      "unit": "km",
+      "value": "48260"
+    },
+    "vehicle.status.serviceTime.hUandAuServiceYellow": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": "months",
+      "value": "4"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": "kPa",
+      "value": "250"
+    },
+    "vehicle.vehicle.deepSleepModeActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.serviceTime.yellow": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": "weeks",
+      "value": "4"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-07T20:40:07.000Z",
+      "unit": "kPa",
+      "value": "230"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.status.checkControlMessages": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.serviceTime.inspectionDateLegal": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "17.01.2027 00:00:00 UTC"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.recharge": {
+      "timestamp": "2026-09-07T21:35:06.005Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.drivetrain.engine.isIgnitionOn": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.replace": {
+      "timestamp": "2026-09-07T21:35:06.005Z",
+      "unit": null,
+      "value": "200"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-07T20:40:07.000Z",
+      "unit": "kPa",
+      "value": "240"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": "kPa",
+      "value": "250"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.vehicle.averageWeeklyDistanceLongTerm": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.vehicle.averageWeeklyDistanceShortTerm": {
+      "timestamp": "2026-09-07T08:55:27.912Z",
+      "unit": null,
+      "value": "570"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-07T20:40:07.000Z",
+      "unit": "kPa",
+      "value": "220"
+    }
+  }
+}

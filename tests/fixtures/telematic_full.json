@@ -143,8 +143,9 @@
       "unit": "Celsius"
     },
     "vehicle.status.conditionBasedServices": {
-      "value": "ESTRUCTURA DESCONOCIDA - pendiente de una llamada real (riesgo 1)",
-      "timestamp": "2026-09-05T07:41:12Z"
+      "timestamp": "2026-09-07T20:35:44.995Z",
+      "unit": null,
+      "value": "[{\"date\":\"null\",\"description\":\"Next change due at the latest when the stated distance has been covered.\",\"id\":2,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Front Brake\",\"text\":\"-\",\"unitOfLengthRemaining\":\"2100\"},{\"date\":\"2027-01\",\"description\":\"Next statutory vehicle inspection due by the stated date.\",\"id\":32,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Statutory vehicle inspection\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2027-07\",\"description\":\"Next service due when the stated distance has been covered or by the specified date.\",\"id\":1,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Engine oil\",\"text\":\"-\",\"unitOfLengthRemaining\":\"14000\"},{\"date\":\"2027-10\",\"description\":\"Next change due at the latest by the stated date.\",\"id\":3,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Brake fluid\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2029-07\",\"description\":\"-\",\"id\":100,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Vehicle check\",\"text\":\"-\",\"unitOfLengthRemaining\":\"45000\"}]"
     },
     "vehicle.status.checkControlMessages": {
       "value": "0",
