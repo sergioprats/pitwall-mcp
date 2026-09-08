@@ -67,20 +67,48 @@ Consulta `get_api_quota` antes de encadenar llamadas.
 |---|---|---|
 | `search_descriptors(query, limit, include_electric)` | no | **funciona** |
 | `get_api_quota()` | no | **funciona** |
-| `list_vehicles()` | sí (1/mes con caché) | esqueleto |
-| `get_vehicle_basic_data()` | sí (1/mes con caché) | esqueleto |
-| `report_product_update_step()` | sí (comparte caché con `basicData`) | esqueleto |
-| `get_telematic_data()` | sí (2/día con caché) | esqueleto |
-| `get_vehicle_status()` | sí (comparte caché) | esqueleto |
-| `get_tyre_diagnosis()` | sí (1/semana con caché) | esqueleto |
-| `get_maintenance_summary()` | sí (compuesta) | esqueleto |
+| `list_vehicles()` | sí (1/mes con caché) | **funciona** |
+| `get_vehicle_basic_data()` | sí (1/mes con caché) | **funciona** |
+| `report_product_update_step()` | sí (comparte caché con `basicData`) | funciona, pero este vehículo **no devuelve `puStep`** |
+| `get_telematic_data()` | sí (2/día con caché) | **funciona** |
+| `get_vehicle_status()` | sí (comparte caché) | **funciona** |
+| `get_tyre_diagnosis()` | sí (1/semana con caché) | funciona, pero este vehículo **devuelve la estructura vacía** |
+| `get_maintenance_summary()` | sí (compuesta) | **funciona** |
 | `diagnose_software_update()` | sí (compuesta) | esqueleto |
 
-Los esqueletos están registrados y devuelven un mensaje claro que dice qué falta
-por configurar y qué queda por implementar. **No inventan datos.** Su lógica se
-escribirá cuando se haya visto llegar una respuesta real y se haya grabado como
-fixture: la estructura de `vehicle.status.conditionBasedServices` no está
-documentada por BMW y es el riesgo número uno del proyecto.
+Las dos herramientas marcadas con una reserva **funcionan y declaran la
+ausencia**: no rellenan el hueco con ceros ni con un valor plausible. `puStep`
+no llega en `/basicData` para este coche, y el diagnóstico de neumáticos vuelve
+con etiquetas y ceros de relleno que no son medidas.
+
+`diagnose_software_update()` sigue siendo un esqueleto, y no por falta de código:
+de las tres condiciones que BMW documenta para no ofrecer una actualización,
+CarData sólo permite observar una, y en la primera lectura real
+`stateOfCharge` y `deepSleepModeActive` llegaron vacíos. Además necesita una
+**serie**, no una foto. El esqueleto dice exactamente eso y no inventa un
+veredicto.
+
+---
+
+## El informe local
+
+El histórico que va guardando el servidor no se ve en ningún sitio: las
+herramientas contestan con la foto del momento, no con la serie. Para mirar la
+serie hay una página HTML que se genera a mano desde la SQLite:
+
+```bash
+.venv/Scripts/python.exe scripts/report.py              # captures/report-*.html
+.venv/Scripts/python.exe scripts/report.py --full-vin   # con el VIN entero
+```
+
+**No gasta ninguna petición.** No usa el token, no llama a ningún endpoint y no
+toca el contador de cuota: sólo lee la base de datos local. La página es un
+único fichero sin JavaScript ni dependencias externas, imprime bien, y sale con
+el VIN enmascarado a `captures/`, que está en `.gitignore`.
+
+Lo primero que enseña no es un número, es cuántos de los 32 descriptores del
+contenedor traen valor de verdad, y en cuál de los tres estados vacíos está cada
+uno de los demás.
 
 ---
 
@@ -181,9 +209,14 @@ Documentación relevante:
 
 ## Estado
 
-Bloque A completo: todo lo que funciona sin credenciales de BMW. La Fase 2
-(daemon MQTT de streaming) es **diseño, no código**; el esquema SQLite ya reserva
-la columna `source` y la tabla `stream_state` para no necesitar migración.
+Todas las herramientas están implementadas contra respuestas reales grabadas
+como fixtures, salvo `diagnose_software_update()`, que espera a tener serie
+suficiente. La Fase 2 (daemon MQTT de streaming) es **diseño, no código**; el
+esquema SQLite ya reserva la columna `source` y la tabla `stream_state` para no
+necesitar migración.
+
+Queda abierto si los 11 descriptores que vuelven vacíos se rellenan con el coche
+despierto: sólo se sabrá leyendo con el contacto dado.
 
 ---
 
