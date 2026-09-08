@@ -11,7 +11,8 @@ servidor arranca pero cualquier herramienta que consulte el catálogo falla con
 un mensaje que te manda aquí.
 
 ```bash
-python scripts/refresh_catalogue.py
+python scripts/refresh_catalogue.py     # desde un clon del repositorio
+pitwall-mcp --fetch-catalogue           # desde el paquete instalado
 ```
 
 Descarga de `github.com/zweckj/bmw-cardata` (licencia MIT), **no de la API de

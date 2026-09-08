@@ -102,6 +102,16 @@ def missing_vin() -> MissingConfigError:
     )
 
 
+def bad_catalogue_download(url: str, path) -> MissingConfigError:  # noqa: ANN001 - Path
+    """Explain that the download did not bring back a catalogue, and wrote nothing."""
+    return MissingConfigError(
+        f"Lo descargado de {url} no parece el catalogo telematico, asi que NO se ha "
+        f"escrito nada en {path}. Suele ser un portal cautivo, un proxy corporativo o "
+        f"una red que exige inicio de sesion: comprueba la conexion y vuelve a "
+        f"intentarlo. Si ya tenias un catalogo valido ahi, sigue intacto."
+    )
+
+
 def missing_catalogue(path) -> MissingConfigError:  # noqa: ANN001 - Path
     """Explain that the telematic catalogue has not been downloaded yet."""
     return MissingConfigError(

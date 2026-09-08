@@ -6,13 +6,17 @@ printed there corrupts the protocol.
 
 from __future__ import annotations
 
+import argparse
 import logging
 import sys
+from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
 from . import __version__
+from .cardata.errors import PitwallError
 from .config import load_settings
+from .fetch import describe, fetch_catalogue
 from .tools import ToolContext, register_tools
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,8 +51,53 @@ def build_server(context: ToolContext | None = None) -> MCPServer:
     return register_tools(server, resolved)
 
 
-def main() -> None:
-    """Run the server over stdio."""
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    """Parse the command line. No arguments means: run the server."""
+    parser = argparse.ArgumentParser(
+        prog="pitwall-mcp",
+        description=(
+            "Servidor MCP de solo lectura sobre la API BMW CarData. "
+            "Sin argumentos arranca el servidor por stdio."
+        ),
+    )
+    parser.add_argument(
+        "--fetch-catalogue",
+        action="store_true",
+        help=(
+            "descarga el catalogo telematico y sale. Se baja de GitHub, no de BMW, "
+            "asi que NO gasta ninguna peticion de tu cuota diaria."
+        ),
+    )
+    parser.add_argument(
+        "--out",
+        metavar="RUTA",
+        default=None,
+        help="con --fetch-catalogue, donde escribirlo (por defecto, junto a la base de datos)",
+    )
+    return parser.parse_args(argv)
+
+
+def _fetch_catalogue_command(out: str | None) -> int:
+    """Download the catalogue, report where it landed, and exit."""
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(message)s")
+    try:
+        path = fetch_catalogue(Path(out).expanduser() if out else None)
+    except PitwallError as error:
+        print(error.message, file=sys.stderr)
+        return 1
+    print(f"Catalogo escrito en {path}")
+    print(describe(path))
+    print()
+    print("Ninguna peticion a la API de BMW: la descarga es de GitHub.")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the server over stdio, or fetch the catalogue and exit."""
+    args = _parse_args(argv)
+    if args.fetch_catalogue:
+        return _fetch_catalogue_command(args.out)
+
     settings = load_settings()
     logging.basicConfig(
         stream=sys.stderr,
@@ -66,6 +115,7 @@ def main() -> None:
     if warning:
         _LOGGER.warning(warning)
     build_server(context).run("stdio")
+    return 0
 
 
 if __name__ == "__main__":

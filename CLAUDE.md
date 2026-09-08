@@ -389,9 +389,12 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
   descarga con `scripts/refresh_catalogue.py` (de GitHub, no de BMW: no gasta
   cuota) y el swagger se saca del portal. `spec/README.md` lo explica. Esto
   evita tener que interpretar las condiciones B2C, no las resuelve.
-- **Consecuencia para PyPI, pendiente:** el wheel ya no puede empaquetar el
-  catálogo, y quien instale desde PyPI no tiene `scripts/`. Antes de publicar el
-  paquete hay que dar una forma de descargarlo desde el propio paquete.
+- ~~Consecuencia para PyPI.~~ **RESUELTO el 2026-09-08:** `pitwall-mcp
+  --fetch-catalogue` descarga el catálogo desde el propio paquete, sin
+  `scripts/`. Se niega a escribir si lo descargado no es un catálogo, para que
+  un portal cautivo no destruya una instalación que funcionaba.
+  `scripts/refresh_catalogue.py` reutiliza ese mismo descargador: una sola URL
+  y una sola definición de qué es un catálogo válido.
 
 ---
 

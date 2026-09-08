@@ -14,16 +14,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pitwall_mcp.descriptors import ALL_CONFIRMED_DESCRIPTORS  # noqa: E402
+from pitwall_mcp.fetch import CATALOGUE_URL, download  # noqa: E402
 
-CATALOGUE_URL = (
-    "https://raw.githubusercontent.com/zweckj/bmw-cardata/main/spec/telematic_catalogue.json"
-)
 #: Default destination: the checkout's own spec/, which is gitignored. The
 #: catalogue is not redistributed inside this repository (see spec/README.md).
 TARGET = Path(__file__).resolve().parents[1] / "spec" / "telematic_catalogue.json"
@@ -73,8 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     target = resolve_target(args.out)
 
     print(f"Descargando {CATALOGUE_URL}")
-    with urllib.request.urlopen(CATALOGUE_URL, timeout=30) as response:  # noqa: S310
-        raw = response.read().decode("utf-8")
+    raw = download()
     remote = json.loads(raw)
 
     local = json.loads(target.read_text(encoding="utf-8")) if target.is_file() else {}

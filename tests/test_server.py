@@ -148,3 +148,42 @@ async def test_server_instructions_state_the_house_rules(bare_server):
     assert "50 peticiones" in instructions
     assert "solo lectura" in instructions.lower()
     assert "version de software" in instructions
+
+
+# --- The catalogue fetch, reachable without a checkout ---------------------
+
+
+def test_the_fetch_flag_downloads_instead_of_starting_the_server(tmp_path, monkeypatch):
+    """Someone who installed from PyPI has no scripts/ and needs the catalogue."""
+    from pitwall_mcp import server as server_module
+
+    target = tmp_path / "telematic_catalogue.json"
+    target.write_text('{"categories": [{"category": "X", "entries": []}]}', encoding="utf-8")
+    monkeypatch.setattr(server_module, "fetch_catalogue", lambda path=None: target)
+
+    def never(*args, **kwargs):
+        raise AssertionError("--fetch-catalogue no debe arrancar el servidor")
+
+    monkeypatch.setattr(server_module, "build_server", never)
+
+    assert server_module.main(["--fetch-catalogue"]) == 0
+
+
+def test_no_arguments_still_means_run_the_server(monkeypatch):
+    """An MCP client launches this with no arguments at all."""
+    from pitwall_mcp import server as server_module
+
+    started = []
+    monkeypatch.setattr(server_module, "build_server", lambda ctx: started.append(ctx) or _Runner())
+
+    server_module.main([])
+
+    assert started
+
+
+class _Runner:
+    """Stands in for the built server: records the transport, connects nothing."""
+
+    def run(self, transport: str) -> None:
+        """Pretend to serve."""
+        assert transport == "stdio"

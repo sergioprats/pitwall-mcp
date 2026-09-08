@@ -132,6 +132,18 @@ Viene de [`zweckj/bmw-cardata`](https://github.com/zweckj/bmw-cardata) (MIT), no
 de la API de CarData, de modo que no gasta ninguna petición de tu cuota. Los
 detalles están en [`spec/README.md`](spec/README.md).
 
+Si instalas el paquete en vez de clonar el repositorio, no tienes `scripts/`, así
+que el propio servidor sabe descargarlo:
+
+```bash
+pitwall-mcp --fetch-catalogue          # junto a la base de datos
+pitwall-mcp --fetch-catalogue --out /otra/ruta.json
+```
+
+Se niega a escribir si lo que baja no es un catálogo —un portal cautivo
+responde 200 con HTML—, así que un catálogo que ya te funcionaba no se pierde
+por una descarga mala.
+
 Los comandos de abajo usan el intérprete del entorno virtual de forma explícita
 (`.venv/Scripts/python.exe` en Windows, `.venv/bin/python` en Linux y macOS).
 Si activas el entorno (`.venv/Scripts/activate`, o `source .venv/bin/activate`),
