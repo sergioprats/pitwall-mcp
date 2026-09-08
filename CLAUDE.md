@@ -159,6 +159,13 @@ Unidad **kPa** (0–1000), valor posible `-NA-` que debe tratarse
 explícitamente como "sin medida", nunca como cero. Se presenta al usuario
 en bar, junto al diferencial contra `pressureTarget`.
 
+**`pressureTarget` NO es una constante. Verificado el 2026-09-08:** el objetivo
+del eje delantero pasó de 250 a 260 kPa entre dos lecturas separadas diez
+minutos, mientras el trasero se quedó en 250. Los ejes pueden tener objetivos
+distintos, y el objetivo cambia con el uso. Comparar una presión fresca contra
+un objetivo cacheado de otro momento da un diferencial falso: el objetivo se lee
+siempre de la misma respuesta que la presión.
+
 ### Tercer estado: presente y vacío
 
 Verificado el 2026-09-07: el contenedor devolvió **las 32 claves pedidas, pero
@@ -459,9 +466,19 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
     nítidos: nueve congelados del día anterior, cinco de las 17:54, cinco de la
     medida real a las 18:29:55, y dos con el sello de nuestra propia petición.
 
-    **Siguiente prueba, 1 petición:** leer tras una noche entera parado. Si el
-    grupo tampoco se mueve entonces, la conclusión es que **la REST no sirve
-    para construir series** y la Fase 2 pasa de opcional a imprescindible.
+    **Cerrado el 2026-09-08 a las 18:41, con el coche ya apagado: los nueve
+    siguen exactamente igual.** Cuatro lecturas, 34 horas, dos trayectos y un
+    apagado, y ni uno se movió. La hipótesis del apagado está muerta.
+
+    **Conclusión operativa: la REST no sirve para construir series** de esos
+    nueve descriptores, `battery.voltage` incluido. `diagnose_software_update`
+    puede quedarse en `SIN VEREDICTO` indefinidamente por mucho que se lea, y lo
+    dice en su salida. **La Fase 2 deja de ser opcional**: es la única vía para
+    tener serie de voltaje.
+
+    Queda una prueba más barata que confirmaría el mecanismo: leer tras una
+    noche entera parado. Si el grupo se moviera entonces, el disparador sería el
+    ciclo de sueño profundo y no el uso del coche.
 
 ---
 
@@ -477,6 +494,11 @@ medida real (20:40), idéntico en ambas lecturas.
 
 Esto explica el "timestamp un minuto en el futuro" que veíamos: es el reloj del
 servidor de BMW, no un desfase del vehículo.
+
+**Los grupos son eventos de subida, no clases fijas.** En la lectura de las
+18:41 las cuatro `pressureTarget` abandonaron el grupo de las 17:54 y pasaron a
+uno nuevo de las 18:30:57, dejando a `conditionBasedServices` solo en el suyo.
+No se puede clasificar un descriptor por el grupo en el que estuvo una vez.
 
 **Verificado el 2026-09-08: son cuatro grupos, no dos.** Una sola respuesta
 traía cuatro sellos distintos: `17:54:22.984` (CBS y las presiones objetivo),
