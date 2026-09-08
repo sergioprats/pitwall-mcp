@@ -447,9 +447,21 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
     que es un consejo contra el que ahora tenemos evidencia. Si se confirma, la
     única vía de serie real es el streaming MQTT de la Fase 2.
 
-    **Hipótesis sin probar:** que ese grupo se refresque al **apagar** el coche.
-    El sello de las 08:55 podría ser un apagado anterior. Se comprueba con una
-    lectura forzada unos minutos después de parar el motor: 1 petición.
+    **Probado el 2026-09-08 a las 18:30, y la hipótesis no se sostiene.** Una
+    tercera lectura, media hora después de la anterior y tras otros 3 km, dejó
+    los nueve descriptores **con el mismo sello exacto de las 08:55 del día
+    anterior**: 34 horas sin moverse, dos trayectos por medio. La idea de que
+    el grupo se refresque al apagar el motor no queda descartada del todo —el
+    vehículo seguía emitiendo medidas frescas a las 18:29:55, así que puede que
+    el apagado no hubiera terminado— pero ya no es la explicación probable.
+
+    Esa misma lectura vuelve a mostrar los cuatro grupos de sellos, ahora
+    nítidos: nueve congelados del día anterior, cinco de las 17:54, cinco de la
+    medida real a las 18:29:55, y dos con el sello de nuestra propia petición.
+
+    **Siguiente prueba, 1 petición:** leer tras una noche entera parado. Si el
+    grupo tampoco se mueve entonces, la conclusión es que **la REST no sirve
+    para construir series** y la Fase 2 pasa de opcional a imprescindible.
 
 ---
 
