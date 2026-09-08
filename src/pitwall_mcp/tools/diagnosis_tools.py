@@ -8,8 +8,11 @@ from ..config import Settings
 from ..descriptors import (
     BATTERY_SERVICE_RECHARGE,
     BATTERY_SERVICE_REPLACE,
+    BATTERY_STATE_OF_CHARGE,
     BATTERY_VOLTAGE,
     CBS_COUNT,
+    DEEP_SLEEP_MODE_ACTIVE,
+    IGNITION_ON,
     INSPECTION_DATE_LEGAL,
     SERVICE_DISTANCE_NEXT,
     SERVICE_DISTANCE_YELLOW,
@@ -22,9 +25,12 @@ from ..formatting import (
     format_battery_recharge,
     format_battery_replace,
     format_moment,
+    format_tristate,
+    parse_numeric,
 )
+from ..storage.history import Reading
 from ..telematic import TelematicSnapshot, parse_cbs
-from .pending import pending, require_ready
+from .readiness import require_ready
 from .telematic_tools import render_cbs
 
 
@@ -98,26 +104,209 @@ async def get_maintenance_summary(
     return "\n".join(lines)
 
 
-def diagnose_software_update(settings: Settings) -> str:
-    """Bounded verdict on why no Remote Software Upgrade has arrived."""
-    return pending(
-        "diagnose_software_update",
-        settings,
-        needs_vin=True,
-        needs_container=True,
-        note=(
-            "LIMITE DEL DIAGNOSTICO, que la herramienta dira literalmente en su salida: "
-            "BMW documenta tres condiciones por las que no se ofrece la instalacion de una "
-            "RSU (estado de carga bajo de la bateria de 12V, luces de emergencia puestas al "
-            "apagar el motor, y aparcar con mas de un 12% de inclinacion). DE ESAS TRES, "
-            "CARDATA SOLO PERMITE OBSERVAR UNA: la bateria. Sobre las otras dos solo puede "
-            "declarar 'no observable por CarData'.\n"
-            "Y con la primera lectura real hay una limitacion mas, peor: stateOfCharge y "
-            "deepSleepModeActive llegaron VACIOS, asi que de la bateria solo se observa el "
-            "voltaje mas serviceDemand. Falta comprobar si esos campos se rellenan con el "
-            "coche despierto antes de escribir el veredicto.\n"
-            "EL VALOR ESTA EN LA SERIE, NO EN LA FOTO. Necesita varias lecturas guardadas "
-            "en el historico local para poder pronunciarse, y con una sola dira cuantas "
-            "tiene y que le falta."
-        ),
+# --- The software-update diagnosis -----------------------------------------
+
+#: Resting voltage below which a 12V battery is usually considered low. Only a
+#: reference point: a reading taken with the engine running says nothing about
+#: the resting state, and `isIgnitionOn` is empty on this vehicle.
+LOW_VOLTAGE = 12.2
+
+#: Below this many distinct observations the tool refuses to talk about trends.
+MIN_OBSERVATIONS = 2
+
+#: How much the voltage has to move before the change is called a direction
+#: rather than noise.
+TREND_EPSILON = 0.05
+
+NO_OBSERVABLE = "NO OBSERVABLE POR CARDATA"
+
+
+def _voltage_series(adapter: CarDataAdapter, vin: str) -> list[Reading]:
+    """Distinct voltage observations, oldest measurement first.
+
+    `changes()` collapses consecutive repetitions, which matters because a value
+    re-read inside one afternoon would otherwise look like several observations.
+    The result is then ordered by BMW's own timestamp rather than by the moment
+    we happened to store it, so a backfilled reading cannot fake a trend.
+    """
+    readings = adapter.history.changes(vin, BATTERY_VOLTAGE)
+    return sorted(readings, key=lambda r: r.source_moment or r.recorded_at)
+
+
+def _trend(series: list[Reading]) -> str:
+    """Name the direction of the series, or refuse to name one."""
+    values = [parse_numeric(r.value) for r in series]
+    numbers = [v for v in values if v is not None]
+    if len(numbers) < MIN_OBSERVATIONS:
+        return "sin tendencia"
+    delta = numbers[-1] - numbers[0]
+    ends = f"de {numbers[0]:.2f} V a {numbers[-1]:.2f} V"
+    if delta < -TREND_EPSILON:
+        return f"baja {ends} entre la primera y la ultima observacion"
+    if delta > TREND_EPSILON:
+        return f"sube {ends} entre la primera y la ultima observacion"
+    return f"se mantiene plana, {ends}"
+
+
+def _verdict(series: list[Reading], *, ignition_known: bool) -> list[str]:
+    """The bounded verdict. Never stronger than the evidence behind it."""
+    numbers = [v for v in (parse_numeric(r.value) for r in series) if v is not None]
+    count = len(numbers)
+
+    if count < MIN_OBSERVATIONS:
+        counted = "1 observacion distinta" if count == 1 else f"{count} observaciones distintas"
+        return [
+            "SIN VEREDICTO.",
+            f"El historico local tiene {counted} de voltaje de la bateria de 12V, y hacen "
+            f"falta al menos 2 observaciones separadas en el tiempo para hablar de una "
+            f"tendencia.",
+            "Cada lectura del contenedor alimenta esta serie. Repite la lectura en dias "
+            "distintos y vuelve a preguntar.",
+        ]
+
+    lowest = min(numbers)
+    lines = [f"Serie de {count} observaciones distintas; {_trend(series)}."]
+    if not ignition_known:
+        lines.append(
+            "Esa pendiente mezcla lecturas tomadas en condiciones desconocidas: sin "
+            "isIgnitionOn, parte de la diferencia puede ser solo motor en marcha frente a "
+            "motor parado, y no una bateria descargandose."
+        )
+    if lowest < LOW_VOLTAGE:
+        lines.extend(
+            [
+                f"Alguna observacion cae por debajo de {LOW_VOLTAGE} V (minimo observado: "
+                f"{lowest:.2f} V), que es donde suele considerarse baja una bateria de 12V "
+                f"en reposo.",
+                "Eso hace la hipotesis de la bateria COMPATIBLE con lo observado, pero "
+                "no demuestra que sea la causa de que no llegue la actualizacion: no se "
+                "sabe si esas medidas se tomaron en reposo, y las otras dos condiciones "
+                f"siguen siendo {NO_OBSERVABLE}.",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"Ninguna observacion cae por debajo de {LOW_VOLTAGE} V (minimo observado: "
+                f"{lowest:.2f} V).",
+                "Con esta evidencia la hipotesis de la bateria queda debilitada, pero eso "
+                f"no descarta nada por si solo: las otras dos condiciones son {NO_OBSERVABLE}, "
+                "y stateOfCharge, que es la medida que BMW usa de verdad, llega vacia.",
+            ]
+        )
+    return lines
+
+
+async def diagnose_software_update(adapter: CarDataAdapter, settings: Settings) -> str:
+    """Bounded verdict on why no Remote Software Upgrade has arrived.
+
+    Reads the maintenance container and `/basicData`, both through the cache, so
+    inside their TTLs this costs nothing. The reasoning itself runs on the local
+    history: the value is in the SERIES, never in one snapshot.
+    """
+    require_ready(settings, needs_vin=True, needs_container=True)
+    result = await adapter.get_telematic_data(settings.vin, settings.container_id)
+    snapshot = TelematicSnapshot.from_payload(result.payload)
+    basic = await adapter.get_basic_data(settings.vin)
+    basic_payload = basic.payload if isinstance(basic.payload, dict) else {}
+
+    lines = [
+        "DIAGNOSTICO: POR QUE NO LLEGA UNA ACTUALIZACION DE SOFTWARE",
+        "",
+        "1. LIMITE DEL DIAGNOSTICO",
+        "BMW documenta tres condiciones por las que no se ofrece la instalacion de una "
+        "Remote Software Upgrade. De esas tres, CarData solo permite observar una:",
+        "  - Estado de carga bajo de la bateria de 12V: parcialmente observable.",
+        f"  - Luces de emergencia puestas al apagar el motor: {NO_OBSERVABLE}.",
+        f"  - Aparcar con mas de un 12% de inclinacion: {NO_OBSERVABLE}.",
+        "Nada de lo que sigue puede confirmar ni descartar esas dos ultimas.",
+        "",
+        "2. VERSION DE SOFTWARE",
+        "En el catalogo telematico de BMW no existe ningun descriptor de version de "
+        "software: ni iStep, ni version, ni estado o historial de Remote Software Upgrade.",
+    ]
+
+    pu_step = basic_payload.get("puStep")
+    if pu_step is None:
+        lines.append(
+            "puStep: /basicData no lo devuelve para este vehiculo, asi que no queda ni "
+            "esa pista indirecta. Ademas no hay historico de puStep: el historico local "
+            "solo guarda respuestas de /telematicData."
+        )
+    else:
+        lines.append(
+            f"puStep: {pu_step}. NO es la version de software, es el paso de actualizacion "
+            "de producto. Y no hay historico de puStep con el que detectar un cambio: el "
+            "historico local solo guarda respuestas de /telematicData."
+        )
+
+    lines.extend(["", "3. BATERIA DE 12V (la unica condicion observable)"])
+    voltage = snapshot.get(BATTERY_VOLTAGE)
+    if voltage.has_value:
+        lines.append(f"Voltaje en la ultima lectura: {voltage.value} V")
+        lines.append(f"  Medido: {format_moment(voltage.moment)}.")
+    else:
+        lines.append("Voltaje: sin lectura en esta respuesta.")
+
+    ignition = snapshot.get(IGNITION_ON)
+    if not ignition.has_value:
+        lines.append(
+            "  isIgnitionOn ha llegado vacio, asi que no se puede saber en que condicion "
+            "se tomo esa medida: con el motor en marcha el alternador da mas de 14 V y la "
+            "cifra no dice nada del estado en reposo."
+        )
+    else:
+        lines.append(f"  Contacto en esa lectura: {format_tristate(ignition.value)}.")
+
+    soc = snapshot.get(BATTERY_STATE_OF_CHARGE)
+    if soc.has_value:
+        lines.append(f"stateOfCharge: {soc.value} %")
+    else:
+        lines.append(
+            "stateOfCharge: presente y vacio. El vehiculo conoce el campo y no ha devuelto "
+            "valor, asi que la medida que BMW usa de verdad para decidir NO esta disponible. "
+            "No se sustituye por el voltaje."
+        )
+
+    replace = snapshot.get(BATTERY_SERVICE_REPLACE)
+    recharge = snapshot.get(BATTERY_SERVICE_RECHARGE)
+    lines.append(
+        f"serviceDemand.replace (salud): "
+        f"{format_battery_replace(replace.value if replace.has_value else None)}"
     )
+    lines.append(
+        f"serviceDemand.recharge (pide recarga): "
+        f"{format_battery_recharge(recharge.value if recharge.has_value else None)}"
+    )
+
+    lines.extend(["", "4. CONTEXTO"])
+    deep_sleep = snapshot.get(DEEP_SLEEP_MODE_ACTIVE)
+    if deep_sleep.has_value:
+        lines.append(f"deepSleepModeActive: {format_tristate(deep_sleep.value)}")
+    else:
+        lines.append(
+            "deepSleepModeActive: presente y vacio. La hipotesis del sueno profundo, que "
+            "explicaria tanto la falta de actualizaciones como las lecturas antiguas, no "
+            "es observable en esta lectura."
+        )
+
+    mileage = snapshot.get(TRAVELLED_DISTANCE)
+    km = mileage.as_int()
+    if km is not None:
+        lines.append(f"Kilometraje: {km:,} km".replace(",", "."))
+    else:
+        lines.append("Kilometraje: sin lectura en esta respuesta.")
+
+    lines.extend(
+        [
+            "",
+            "5. VEREDICTO",
+            *_verdict(_voltage_series(adapter, settings.vin), ignition_known=ignition.has_value),
+        ]
+    )
+
+    lines.append("")
+    lines.append(f"Dato mas reciente utilizado: {format_moment(snapshot.newest_moment())}.")
+    lines.append(f"Dato mas antiguo utilizado: {format_moment(snapshot.oldest_moment())}.")
+    lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))
+    return "\n".join(lines)

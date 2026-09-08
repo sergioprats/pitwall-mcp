@@ -22,7 +22,7 @@ from ..descriptors import (
 )
 from ..formatting import explain_missing, format_moment
 from ..telematic import CbsBlock, TelematicSnapshot, ValueState, parse_cbs
-from .pending import require_ready
+from .readiness import require_ready
 
 
 async def _read(adapter: CarDataAdapter, settings: Settings):

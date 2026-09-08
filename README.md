@@ -74,19 +74,21 @@ Consulta `get_api_quota` antes de encadenar llamadas.
 | `get_vehicle_status()` | sí (comparte caché) | **funciona** |
 | `get_tyre_diagnosis()` | sí (1/semana con caché) | funciona, pero este vehículo **devuelve la estructura vacía** |
 | `get_maintenance_summary()` | sí (compuesta) | **funciona** |
-| `diagnose_software_update()` | sí (compuesta) | esqueleto |
+| `diagnose_software_update()` | sí (compuesta, comparte caché) | **funciona**, con veredicto acotado |
 
 Las dos herramientas marcadas con una reserva **funcionan y declaran la
 ausencia**: no rellenan el hueco con ceros ni con un valor plausible. `puStep`
 no llega en `/basicData` para este coche, y el diagnóstico de neumáticos vuelve
 con etiquetas y ceros de relleno que no son medidas.
 
-`diagnose_software_update()` sigue siendo un esqueleto, y no por falta de código:
-de las tres condiciones que BMW documenta para no ofrecer una actualización,
-CarData sólo permite observar una, y en la primera lectura real
-`stateOfCharge` y `deepSleepModeActive` llegaron vacíos. Además necesita una
-**serie**, no una foto. El esqueleto dice exactamente eso y no inventa un
-veredicto.
+`diagnose_software_update()` razona sobre la **serie** del histórico, no sobre
+una foto. De las tres condiciones que BMW documenta para no ofrecer una
+actualización, CarData sólo permite observar una, y la herramienta declara las
+otras dos como `NO OBSERVABLE POR CARDATA` en lugar de razonar como si las
+hubiera descartado. Con menos de dos observaciones distintas responde
+**SIN VEREDICTO** y dice qué le falta. Y como `isIgnitionOn` llega vacío, avisa
+de que parte de cualquier pendiente puede ser sólo motor en marcha frente a
+motor parado, no una batería descargándose.
 
 ---
 
@@ -210,8 +212,7 @@ Documentación relevante:
 ## Estado
 
 Todas las herramientas están implementadas contra respuestas reales grabadas
-como fixtures, salvo `diagnose_software_update()`, que espera a tener serie
-suficiente. La Fase 2 (daemon MQTT de streaming) es **diseño, no código**; el
+como fixtures. La Fase 2 (daemon MQTT de streaming) es **diseño, no código**; el
 esquema SQLite ya reserva la columna `source` y la tabla `stream_state` para no
 necesitar migración.
 

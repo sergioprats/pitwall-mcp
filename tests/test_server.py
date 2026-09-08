@@ -99,19 +99,26 @@ async def test_pending_tools_ask_for_a_login_when_there_are_no_credentials(bare_
     assert "scripts/login.py" in text
 
 
-async def test_the_last_pending_tool_admits_it(server):
-    """diagnose_software_update is the only one still unwritten, and says so."""
+async def test_no_tool_is_a_skeleton_any_more(server, fake_client):
+    """Every registered tool answers with data now, none with a placeholder."""
+    fake_client.responses["get_telematic_data"] = load_fixture("telematic_real.json")
+    fake_client.responses["get_basic_data"] = load_fixture("basic_data_real.json")
+
     text = await _call(server, "diagnose_software_update")
-    assert "todavia no" in text
-    assert "Bloque B" in text
+
+    assert "todavia no" not in text
+    assert "Bloque B" not in text
 
 
-async def test_the_diagnosis_tool_states_its_limits_up_front(server):
+async def test_the_diagnosis_tool_states_its_limits_up_front(server, fake_client):
     """One of three conditions is observable, and the tool says so."""
+    fake_client.responses["get_telematic_data"] = load_fixture("telematic_real.json")
+    fake_client.responses["get_basic_data"] = load_fixture("basic_data_real.json")
+
     text = await _call(server, "diagnose_software_update")
-    assert "SOLO PERMITE OBSERVAR UNA" in text
-    assert "no observable por CarData" in text
-    assert "LA SERIE" in text
+
+    assert "solo permite observar una" in text
+    assert text.count("NO OBSERVABLE POR CARDATA") == 2
 
 
 async def test_the_tyre_tool_warns_it_has_no_pressures(server, fake_client):

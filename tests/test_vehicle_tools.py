@@ -115,6 +115,19 @@ async def test_pustep_is_reported_when_a_vehicle_does_return_it(
     assert "NO es la version de software" in text
 
 
+async def test_it_does_not_promise_a_pustep_history_it_never_keeps(
+    ready_settings, db, fake_client
+):
+    """Only /telematicData responses reach `readings`; basicData never does."""
+    fake_client.responses["get_basic_data"] = load_fixture("basic_data.json")
+    adapter = CarDataAdapter(ready_settings, db=db, tokens=FakeTokens())
+
+    text = await vehicle_tools.report_product_update_step(adapter, ready_settings)
+
+    assert "Se guarda en el historico" not in text
+    assert "no se guarda en el historico" in text
+
+
 # --- get_tyre_diagnosis ----------------------------------------------------
 
 

@@ -17,7 +17,7 @@ from typing import Any
 from ..cardata.client import CarDataAdapter
 from ..config import Settings
 from ..formatting import format_moment
-from .pending import require_ready
+from .readiness import require_ready
 
 #: Spanish labels for the fields this vehicle actually returns. Anything not
 #: listed is shown with BMW's own key, never dropped and never renamed.
@@ -165,7 +165,9 @@ async def report_product_update_step(adapter: CarDataAdapter, settings: Settings
                 "OJO: puStep es el PASO DE ACTUALIZACION DE PRODUCTO. NO es la version de "
                 "software del vehiculo; ese descriptor no existe en el catalogo de BMW. "
                 "No lo presentes como equivalente.",
-                "Se guarda en el historico local para detectar si alguna vez cambia.",
+                "Y no se guarda en el historico local: la tabla readings solo recibe "
+                "respuestas de /telematicData, asi que no hay serie de puStep con la "
+                "que detectar un cambio.",
             ]
         )
 

@@ -224,9 +224,11 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         ),
         annotations=READ_ONLY,
     )
-    def diagnose_software_update() -> str:
+    async def diagnose_software_update() -> str:
         """Return the bounded software-update diagnosis."""
-        return _guard(lambda: diagnosis_tools.diagnose_software_update(context.settings))
+        return await _guard_async(
+            diagnosis_tools.diagnose_software_update(context.adapter, context.settings)
+        )
 
     _LOGGER.info("Registered pitwall-mcp tools (all read-only)")
     return server

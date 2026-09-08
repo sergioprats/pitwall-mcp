@@ -17,7 +17,7 @@ from typing import Any
 
 from ..cardata.client import CarDataAdapter
 from ..config import Settings
-from .pending import require_ready
+from .readiness import require_ready
 
 WHEELS: tuple[tuple[str, str], ...] = (
     ("frontLeft", "Delantera izquierda"),
