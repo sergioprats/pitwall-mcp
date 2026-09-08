@@ -233,3 +233,15 @@ async def test_the_single_observation_line_is_written_in_plain_spanish(adapter, 
 
     assert "1 observacion distinta " in text
     assert "distinta(s)" not in text
+
+
+async def test_it_warns_that_repeating_the_rest_read_may_not_add_points(adapter, ready_settings):
+    """Verified 2026-09-08: voltage did not refresh across 20 h and a drive.
+
+    Telling the user to "read again in a few days" would be advice we have
+    evidence against, which is worse than saying nothing.
+    """
+    text = await diagnosis_tools.diagnose_software_update(adapter, ready_settings)
+
+    assert "puede que repetir la lectura REST no anada ningun punto" in text
+    assert "streaming" in text

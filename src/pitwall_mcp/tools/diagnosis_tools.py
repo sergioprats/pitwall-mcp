@@ -160,8 +160,12 @@ def _verdict(series: list[Reading], *, ignition_known: bool) -> list[str]:
             f"El historico local tiene {counted} de voltaje de la bateria de 12V, y hacen "
             f"falta al menos 2 observaciones separadas en el tiempo para hablar de una "
             f"tendencia.",
-            "Cada lectura del contenedor alimenta esta serie. Repite la lectura en dias "
-            "distintos y vuelve a preguntar.",
+            "Y hay una mala noticia sobre como conseguirlas: verificado el 2026-09-08, "
+            "battery.voltage no se refresco en 20 horas, ni siquiera con el coche en "
+            "marcha y rodando. Comparte sello de tiempo con otros ocho descriptores que "
+            "tampoco se movieron, asi que puede que repetir la lectura REST no anada "
+            "ningun punto a esta serie. Si eso se confirma, la unica via para tener serie "
+            "real es el streaming MQTT de la Fase 2, que hoy es diseno y no codigo.",
         ]
 
     lowest = min(numbers)

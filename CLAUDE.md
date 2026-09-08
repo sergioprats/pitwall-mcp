@@ -424,10 +424,29 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
 9. **El diagnóstico de neumáticos viene vacío**: estructura completa, valores a
    cero, `errors: []`. Probablemente requiere que los neumáticos estén
    registrados en el sistema de BMW. Los ceros son relleno, no medidas.
-10. **Los 11 campos vacíos siguen vacíos con el coche recién aparcado.** Dos
-    lecturas separadas 32 minutos, ambas con el coche parado desde hacía ~1 h:
-    ninguno se rellenó. **Sigue sin probarse** qué pasa con el contacto dado o
-    en marcha, que es la única condición que queda por probar.
+10. ~~Los 11 campos vacíos.~~ **CERRADO el 2026-09-08, en negativo.** Lectura
+    con el coche **encendido y rodando**: los mismos 11 siguen vacíos. El caso
+    decisivo es `isIgnitionOn`, que llegó vacío **mientras el contacto estaba
+    dado**. Eso no es "falta de lectura reciente": este U11 no los emite. Que el
+    coche estaba despierto está probado por el propio dato — `travelledDistance`
+    pasó de 48.260 a 48.278 km y una presión trasera subió de 220 a 230 kPa, con
+    sellos de las 17:59 de ese día.
+
+11. **Hay un grupo de descriptores congelado, y arruina la serie.** En esa misma
+    lectura, nueve descriptores conservaron el sello `2026-09-07T08:55:27.912Z`
+    de veinte horas antes: `battery.voltage`, `serviceDistance.next` y
+    `.yellow`, `serviceTime.*`, `conditionBasedServicesCount` y las dos medias
+    semanales. **No se movieron ni con el coche en marcha.**
+
+    Consecuencia directa: **`diagnose_software_update` puede no conseguir nunca
+    una serie por REST**, porque el voltaje no se refresca al leer. La
+    herramienta lo dice en su salida en lugar de recomendar repetir la lectura,
+    que es un consejo contra el que ahora tenemos evidencia. Si se confirma, la
+    única vía de serie real es el streaming MQTT de la Fase 2.
+
+    **Hipótesis sin probar:** que ese grupo se refresque al **apagar** el coche.
+    El sello de las 08:55 podría ser un apagado anterior. Se comprueba con una
+    lectura forzada unos minutos después de parar el motor: 1 petición.
 
 ---
 
@@ -443,6 +462,13 @@ medida real (20:40), idéntico en ambas lecturas.
 
 Esto explica el "timestamp un minuto en el futuro" que veíamos: es el reloj del
 servidor de BMW, no un desfase del vehículo.
+
+**Verificado el 2026-09-08: son cuatro grupos, no dos.** Una sola respuesta
+traía cuatro sellos distintos: `17:54:22.984` (CBS y las presiones objetivo),
+`17:59:09.000` (kilometraje y presiones reales, la medida de verdad),
+`18:00:07.428` (los dos `serviceDemand`, o sea el momento de nuestra petición) y
+`2026-09-07T08:55:27.912` (el grupo congelado del riesgo 11). Leer un timestamp
+sin saber a qué grupo pertenece lleva a conclusiones falsas.
 
 **Consecuencia grave para el histórico.** El índice único de `readings` incluye
 `source_timestamp`, así que esos dos descriptores **generan una fila nueva en
