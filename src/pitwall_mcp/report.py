@@ -30,7 +30,7 @@ from .descriptors import (
     WHEEL_POSITIONS,
     tyre_descriptor,
 )
-from .formatting import build_pressure, format_moment, is_no_measurement, parse_numeric
+from .formatting import build_pressure, is_no_measurement, parse_numeric
 from .storage.db import utc_now
 from .storage.history import HistoryStore, Reading
 from .telematic import CbsBlock, TelematicEntry, TelematicSnapshot, parse_cbs
@@ -87,7 +87,7 @@ def render_report(
     body.append(_cbs_section(history, vin))
     body.append(_pressure_section(history, vin))
     body.append(_series_section(history, vin, BATTERY_VOLTAGE, "Bateria de 12V: voltaje"))
-    body.append(_coverage_section(history, vin, now=moment))
+    body.append(_coverage_section(history, vin))
 
     return _document("\n".join(body))
 
@@ -198,7 +198,7 @@ def _ledger_section(history: HistoryStore, vin: str) -> str:
     )
 
 
-def _coverage_section(history: HistoryStore, vin: str, *, now: datetime) -> str:
+def _coverage_section(history: HistoryStore, vin: str) -> str:
     """One row per container descriptor: state, evidence and last reading."""
     parts = [
         "<section><h2>Cobertura de descriptores</h2>",
@@ -212,7 +212,7 @@ def _coverage_section(history: HistoryStore, vin: str, *, now: datetime) -> str:
     for descriptor in CONTAINER_DESCRIPTORS:
         latest = history.latest(vin, descriptor)
         distinct = len(history.changes(vin, descriptor))
-        last = format_moment(latest.recorded_at, now=now) if latest is not None else "-"
+        last = latest.recorded_at.strftime("%Y-%m-%d %H:%M UTC") if latest is not None else "-"
         parts.append(
             f"<tr><td><code>{escape(descriptor)}</code></td>"
             f"<td>{_coverage_state(latest)}</td>"
@@ -272,8 +272,18 @@ def _series_section(
     parts.append(f"<p class='evidence'>{_evidence(series)}</p>")
     if len(series.points) >= 2:
         parts.append(_sparkline(series.points))
+        parts.append(f"<p class='range'>{_range_note(series, latest.unit)}</p>")
     parts.append("</section>")
     return "\n".join(parts)
+
+
+def _range_note(series: Series, unit: str | None) -> str:
+    """Give the sparkline a scale, so the line is data and not decoration."""
+    low, high = min(series.points), max(series.points)
+    suffix = f" {escape(unit)}" if unit else ""
+    if low == high:
+        return f"Plano en {low:g}{suffix} a lo largo de toda la serie."
+    return f"Recorre de {low:g} a {high:g}{suffix}, el punto lleno es la ultima lectura."
 
 
 def _evidence(series: Series) -> str:
@@ -384,10 +394,12 @@ def _sparkline(points: list[float]) -> str:
         ratio = (value - low) / span
         y = SPARK_HEIGHT - SPARK_PADDING - ratio * (SPARK_HEIGHT - 2 * SPARK_PADDING)
         plotted.append(f"{x:.1f},{y:.1f}")
+    last_x, last_y = plotted[-1].split(",")
     return (
         f"<svg class='spark' viewBox='0 0 {SPARK_WIDTH} {SPARK_HEIGHT}' "
         f"role='img' aria-label='Serie de {len(points)} observaciones'>"
-        f"<polyline points='{' '.join(plotted)}'/></svg>"
+        f"<polyline points='{' '.join(plotted)}'/>"
+        f"<circle cx='{last_x}' cy='{last_y}' r='3.5'/></svg>"
     )
 
 
@@ -442,14 +454,14 @@ p { margin: 0 0 0.75rem; }
 .tick { width: 15px; height: 30px; border-radius: 2px; background: var(--hollow); }
 .tick--value { background: var(--live); }
 .tick--na { background: var(--flag); }
-.tick--empty { background: var(--hollow); opacity: 0.55; }
+.tick--empty { background: var(--hollow); }
 .tick--absent { background: transparent; border: 1px solid var(--rule); }
 .legend { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--muted); font-size: 0.9rem; }
 .key { display: inline-flex; align-items: center; gap: 0.4rem; }
 .swatch { width: 10px; height: 10px; border-radius: 2px; background: var(--hollow); }
 .swatch--value { background: var(--live); }
 .swatch--na { background: var(--flag); }
-.swatch--empty { background: var(--hollow); opacity: 0.55; }
+.swatch--empty { background: var(--hollow); }
 .swatch--absent { background: transparent; border: 1px solid var(--rule); }
 .scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
@@ -464,7 +476,10 @@ td {
   border-bottom: 1px solid var(--rule);
   vertical-align: top;
 }
+td + td, th + th { padding-left: 1.25rem; }
 td:nth-child(3), th:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+.range { color: var(--muted); font-size: 0.9rem; margin-top: 0.35rem; }
+td:nth-child(2), td:last-child { white-space: nowrap; }
 code {
   font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
   font-size: 0.85em;
@@ -472,6 +487,7 @@ code {
 ul { list-style: none; margin: 0; padding: 0; }
 li { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
 .spark { display: block; width: 100%; max-width: 20rem; height: auto; margin: 0.5rem 0 0; }
+.spark circle { fill: var(--live); }
 .spark polyline {
   fill: none;
   stroke: var(--live);

@@ -324,3 +324,30 @@ def test_the_masthead_states_how_much_history_there_is(history):
 
     assert "2 lecturas guardadas" in html
     assert "2026-09-06" in html
+
+
+def test_the_sparkline_marks_the_latest_observation(history):
+    for index, value in enumerate(["12.10", "12.30", "12.60"]):
+        record(history, BATTERY_VOLTAGE, value, unit="V", minutes_ago=60 - index * 10)
+
+    html = render_report(history, FAKE_VIN, now=NOW)
+
+    assert "<circle" in html
+
+
+def test_the_sparkline_states_the_range_it_spans(history):
+    for index, value in enumerate(["12.10", "12.30", "12.60"]):
+        record(history, BATTERY_VOLTAGE, value, unit="V", minutes_ago=60 - index * 10)
+
+    html = render_report(history, FAKE_VIN, now=NOW)
+
+    assert "de 12.1 a 12.6 V" in html
+
+
+def test_the_coverage_table_dates_rows_absolutely_not_by_relative_age(history):
+    record(history, TRAVELLED_DISTANCE, "12345", unit="km")
+
+    html = render_report(history, FAKE_VIN, now=NOW)
+
+    assert "2026-09-08 12:00 UTC" in html
+    assert "hace" not in html
