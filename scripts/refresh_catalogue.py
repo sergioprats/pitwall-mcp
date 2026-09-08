@@ -24,6 +24,8 @@ from pitwall_mcp.descriptors import ALL_CONFIRMED_DESCRIPTORS  # noqa: E402
 CATALOGUE_URL = (
     "https://raw.githubusercontent.com/zweckj/bmw-cardata/main/spec/telematic_catalogue.json"
 )
+#: Default destination: the checkout's own spec/, which is gitignored. The
+#: catalogue is not redistributed inside this repository (see spec/README.md).
 TARGET = Path(__file__).resolve().parents[1] / "spec" / "telematic_catalogue.json"
 
 
@@ -48,6 +50,11 @@ def summarise(payload: dict) -> str:
     return "\n".join(lines)
 
 
+def resolve_target(out: str | None) -> Path:
+    """Where to write the catalogue: --out if given, the checkout's spec/ otherwise."""
+    return Path(out).expanduser() if out else TARGET
+
+
 def main(argv: list[str] | None = None) -> int:
     """Download the catalogue and report (or apply) the difference."""
     parser = argparse.ArgumentParser(description="Actualiza el catalogo telematico local.")
@@ -56,14 +63,21 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="solo compara y devuelve codigo 1 si hay cambios; no escribe nada",
     )
+    parser.add_argument(
+        "--out",
+        metavar="RUTA",
+        default=None,
+        help=f"donde escribirlo (por defecto: {TARGET})",
+    )
     args = parser.parse_args(argv)
+    target = resolve_target(args.out)
 
     print(f"Descargando {CATALOGUE_URL}")
     with urllib.request.urlopen(CATALOGUE_URL, timeout=30) as response:  # noqa: S310
         raw = response.read().decode("utf-8")
     remote = json.loads(raw)
 
-    local = json.loads(TARGET.read_text(encoding="utf-8")) if TARGET.is_file() else {}
+    local = json.loads(target.read_text(encoding="utf-8")) if target.is_file() else {}
 
     remote_descriptors = descriptors_of(remote)
     local_descriptors = descriptors_of(local)

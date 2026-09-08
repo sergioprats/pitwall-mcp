@@ -16,6 +16,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final
 
+from .cardata import errors
 from .descriptors import ALL_CONFIRMED_DESCRIPTORS, CONTAINER_DESCRIPTORS
 
 #: This is a petrol U11. The whole electric category is out of scope, but it is
@@ -186,6 +187,8 @@ class Catalogue:
         carries the literal STRING "null" as its unit instead of a JSON null.
         `_clean` normalises that, so no output ever prints "unidad null".
         """
+        if not path.is_file():
+            raise errors.missing_catalogue(path)
         raw: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         entries: list[CatalogueEntry] = []
         for category in raw.get("categories", []):

@@ -88,12 +88,29 @@ class Settings:
         return missing
 
 
+def _default_catalogue_path() -> Path:
+    """Where a downloaded catalogue lives, next to the database."""
+    return Path.home() / ".local" / "share" / "pitwall-mcp" / "telematic_catalogue.json"
+
+
 def _catalogue_path() -> Path:
-    """Locate the telematic catalogue: packaged copy first, repo copy second."""
-    packaged = Path(__file__).parent / "spec" / "telematic_catalogue.json"
-    if packaged.is_file():
-        return packaged
-    return Path(__file__).resolve().parents[2] / "spec" / "telematic_catalogue.json"
+    """Locate the telematic catalogue.
+
+    The catalogue is NOT redistributed inside this repository, so it has to be
+    fetched once with `scripts/refresh_catalogue.py`. Order of preference: a
+    copy packaged into the wheel, the downloaded copy next to the database, and
+    finally a checkout's own `spec/` directory. The last candidate is returned
+    even when it does not exist, so the error names a concrete path.
+    """
+    candidates = (
+        Path(__file__).parent / "spec" / "telematic_catalogue.json",
+        _default_catalogue_path(),
+        Path(__file__).resolve().parents[2] / "spec" / "telematic_catalogue.json",
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return candidates[-1]
 
 
 def find_dotenv(env: dict[str, str] | None = None) -> Path | None:

@@ -380,10 +380,18 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
 - Licencia **MIT**, titular Panesoft.
 - Aviso de proyecto no afiliado a BMW AG en README y en `server.json`.
 - `server.json` válido para `registry.modelcontextprotocol.io`.
-- **Antes de publicar nada**: revisar las condiciones de uso B2C de BMW
-  CarData, en especial si permiten redistribuir el catálogo telemático
-  dentro del repositorio. Si no lo permiten, `spec/telematic_catalogue.json`
-  sale del repo y se descarga en tiempo de instalación.
+- **Cuenta y namespace: `sergioprats`.** No `panesoft`: esa organización existe
+  en GitHub pero la cuenta de trabajo no es miembro, y el registro MCP exige
+  demostrar la propiedad de `io.github.<cuenta>`. Aparece en `server.json`,
+  `pyproject.toml` y el README; si algún día cambia, cambia en los tres.
+- **Resuelto el 2026-09-08: los documentos de BMW no se redistribuyen.**
+  `spec/*.json` está en `.gitignore` y purgado del historial. El catálogo se
+  descarga con `scripts/refresh_catalogue.py` (de GitHub, no de BMW: no gasta
+  cuota) y el swagger se saca del portal. `spec/README.md` lo explica. Esto
+  evita tener que interpretar las condiciones B2C, no las resuelve.
+- **Consecuencia para PyPI, pendiente:** el wheel ya no puede empaquetar el
+  catálogo, y quien instale desde PyPI no tiene `scripts/`. Antes de publicar el
+  paquete hay que dar una forma de descargarlo desde el propio paquete.
 
 ---
 

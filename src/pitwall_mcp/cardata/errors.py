@@ -102,6 +102,16 @@ def missing_vin() -> MissingConfigError:
     )
 
 
+def missing_catalogue(path) -> MissingConfigError:  # noqa: ANN001 - Path
+    """Explain that the telematic catalogue has not been downloaded yet."""
+    return MissingConfigError(
+        f"No encuentro el catalogo telematico en {path}. No viene dentro del "
+        f"repositorio: descargalo una vez con 'python scripts/refresh_catalogue.py'. "
+        f"La descarga es de GitHub, no de BMW, asi que no gasta ninguna peticion de "
+        f"tu cuota. Si lo tienes en otro sitio, apunta PITWALL_CATALOGUE_PATH a el."
+    )
+
+
 def missing_container() -> MissingConfigError:
     """Explain that no container id is configured."""
     return MissingConfigError(

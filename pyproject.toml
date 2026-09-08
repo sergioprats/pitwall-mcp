@@ -34,17 +34,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/panesoft/pitwall-mcp"
-Issues = "https://github.com/panesoft/pitwall-mcp/issues"
+Homepage = "https://github.com/sergioprats/pitwall-mcp"
+Issues = "https://github.com/sergioprats/pitwall-mcp/issues"
 
 [project.scripts]
 pitwall-mcp = "pitwall_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pitwall_mcp"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"spec/telematic_catalogue.json" = "pitwall_mcp/spec/telematic_catalogue.json"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

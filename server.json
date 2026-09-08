@@ -1,14 +1,14 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
-  "name": "io.github.panesoft/pitwall-mcp",
+  "name": "io.github.sergioprats/pitwall-mcp",
   "description": "Servidor MCP de solo lectura sobre la API BMW CarData: mantenimiento, neumaticos y bateria de 12V. Proyecto no afiliado a BMW AG.",
   "status": "active",
   "version": "0.1.0",
   "repository": {
-    "url": "https://github.com/panesoft/pitwall-mcp",
+    "url": "https://github.com/sergioprats/pitwall-mcp",
     "source": "github"
   },
-  "websiteUrl": "https://github.com/panesoft/pitwall-mcp",
+  "websiteUrl": "https://github.com/sergioprats/pitwall-mcp",
   "packages": [
     {
       "registryType": "pypi",

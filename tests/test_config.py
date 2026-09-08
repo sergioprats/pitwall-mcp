@@ -9,6 +9,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from pitwall_mcp import config
+from pitwall_mcp.cardata.errors import PitwallError
+from pitwall_mcp.catalogue import load_catalogue
 from pitwall_mcp.config import (
     DEFAULT_DAILY_QUOTA,
     TTLS,
@@ -258,3 +263,26 @@ def test_no_dotenv_anywhere_is_not_an_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     settings = load_settings({"PITWALL_ENV_FILE": str(tmp_path / "no-existe.env")})
     assert settings.client_id is None
+
+
+# --- The catalogue lives outside the repository now ------------------------
+
+
+def test_the_catalogue_is_looked_for_in_the_user_data_directory(tmp_path, monkeypatch):
+    """It is no longer redistributed inside the repo, so it has to have a home.
+
+    Order: the copy packaged into the wheel, then the downloaded one next to the
+    database, then a checkout's own spec/ directory.
+    """
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    downloaded = tmp_path / ".local" / "share" / "pitwall-mcp" / "telematic_catalogue.json"
+    downloaded.parent.mkdir(parents=True)
+    downloaded.write_text("{}", encoding="utf-8")
+
+    assert config._catalogue_path() == downloaded
+
+
+def test_a_missing_catalogue_says_which_script_downloads_it(tmp_path):
+    """Rule 6: an absence explains itself and names the fix."""
+    with pytest.raises(PitwallError, match="refresh_catalogue.py"):
+        load_catalogue(tmp_path / "no-esta.json")

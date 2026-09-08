@@ -18,6 +18,11 @@ data/
 *.raw.json
 captures/
 
+# --- Documentos de BMW: NO se redistribuyen desde este repositorio ---
+# El catalogo se descarga con scripts/refresh_catalogue.py; el swagger se
+# obtiene del portal de CarData. Ver spec/README.md.
+spec/*.json
+
 # --- Python ---
 __pycache__/
 *.py[cod]

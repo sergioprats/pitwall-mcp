@@ -119,11 +119,18 @@ uno de los demás.
 Requiere **Python 3.12+**.
 
 ```bash
-git clone https://github.com/panesoft/pitwall-mcp
+git clone https://github.com/sergioprats/pitwall-mcp
 cd pitwall-mcp
 python -m venv .venv
 pip install -e ".[dev]"
+python scripts/refresh_catalogue.py
 ```
+
+Ese último paso **no es opcional**: el catálogo telemático es un documento de
+BMW y este repositorio no lo redistribuye, así que hay que descargarlo una vez.
+Viene de [`zweckj/bmw-cardata`](https://github.com/zweckj/bmw-cardata) (MIT), no
+de la API de CarData, de modo que no gasta ninguna petición de tu cuota. Los
+detalles están en [`spec/README.md`](spec/README.md).
 
 Los comandos de abajo usan el intérprete del entorno virtual de forma explícita
 (`.venv/Scripts/python.exe` en Windows, `.venv/bin/python` en Linux y macOS).
@@ -225,9 +232,10 @@ despierto: sólo se sabrá leyendo con el contacto dado.
 
 MIT, © 2026 Panesoft. Ver [LICENSE](LICENSE).
 
-`spec/telematic_catalogue.json` procede del proyecto
-[zweckj/bmw-cardata](https://github.com/zweckj/bmw-cardata). Antes de publicar
-este repositorio hay que revisar las condiciones de uso B2C de BMW CarData, en
-concreto si permiten redistribuir el catálogo telemático; si no lo permiten, el
-fichero sale del repo y se descarga en tiempo de instalación con
-`scripts/refresh_catalogue.py`.
+**Los documentos de BMW no se redistribuyen desde aquí.** Ni el catálogo
+telemático ni la especificación OpenAPI están en el control de versiones: se
+descargan en tu máquina, y `spec/` está en `.gitignore`. Ver
+[`spec/README.md`](spec/README.md).
+
+Proyecto **no afiliado a BMW AG**. "BMW" y "CarData" son marcas de sus
+respectivos propietarios.
