@@ -145,7 +145,37 @@ inspection` (id 32), `Engine oil` (id 1), `Brake fluid` (id 3), `Vehicle check`
 
 **Discrepancia sin explicar:** `conditionBasedServicesCount` devolvió **9**
 mientras el array traía **5** partidas. Se desconoce el motivo. Las herramientas
-dan los dos números y **no fingen que cuadran**.
+dan los dos números y **no fingen que cuadran**. El 2026-09-13 seguía igual: 9
+contra 5.
+
+**`serviceDistance.next` no es la partida más urgente. Verificado el
+2026-09-13.** El 7 de septiembre valía 2140 con los frenos delanteros a 2100 km
+en `OK`. Tras 157 km, los frenos pasaron a **1900 km en `PENDING`** y
+`serviceDistance.next` saltó a **13560**, una cifra que no coincide con ninguna
+partida. Dar la cifra global como "próximo servicio" habría escondido lo único
+urgente. Las herramientas añaden una línea `OJO` con toda partida que BMW no
+marque `OK`. No se inventa de dónde sale el 13560.
+
+**Estructura de `checkControlMessages`, verificada el 2026-09-13**, la primera
+vez que llegó con valor. Mismo truco que CBS (JSON dentro de una cadena, segundo
+`json.loads`) y mismas claves, pero **ni los mismos significados ni los mismos
+centinelas**:
+
+```json
+{"date": null, "description": null, "id": 907, "messageType": "CCM",
+ "status": "NULL", "title": null, "text": "The brake pads need to be replaced.",
+ "unitOfLengthRemaining": "48376"}
+```
+
+- `date`, `description` y `title` llegan como `null` **de JSON**, no como la
+  cadena `"null"` de CBS. `status` sí llega como cadena: `"NULL"`, en mayúsculas.
+- **`unitOfLengthRemaining` no es una distancia restante.** Valía 48376 mientras
+  el cuentakilómetros pasaba de 48.283 (8-sep) a 48.440 (13-sep) y CBS daba a
+  esos mismos frenos 1.900 km. Se trata como el kilometraje al que se refiere el
+  aviso. BMW no documenta el campo; es una lectura, no una definición.
+- Encaja con CBS: con 2.100 km restantes a los 48.283, los frenos cruzan el
+  umbral de preaviso de 2.000 km hacia los 48.383, y el aviso se registró a los
+  48.376.
 
 ### Neumáticos
 
@@ -166,6 +196,9 @@ distintos, y el objetivo cambia con el uso. Comparar una presión fresca contra
 un objetivo cacheado de otro momento da un diferencial falso: el objetivo se lee
 siempre de la misma respuesta que la presión.
 
+El 2026-09-13 volvió a moverse: **280 kPa delante y 270 detrás** (antes 260 y
+250), con presiones de 270/270/250/260. No se sabe qué lo mueve.
+
 ### Tercer estado: presente y vacío
 
 Verificado el 2026-09-07: el contenedor devolvió **las 32 claves pedidas, pero
@@ -183,6 +216,11 @@ En esta lectura llegaron vacíos: las cuatro `tire.temperature`,
 `battery.stateOfCharge`, `battery.stateOfChargePlausibility`,
 `deepSleepModeActive`, `isIgnitionOn`, `isActive`, `checkControlMessages` y
 `conditionBasedServicesAverageDistancePerDay`.
+
+**Corrección del 2026-09-13:** `checkControlMessages` llegó con valor en cuanto
+hubo un aviso (pastillas de freno). Vacío coincidía con no tener avisos, pero
+BMW no lo documenta, así que las herramientas dicen "llega vacío" y no "sin
+avisos". Los vacíos de esa lectura fueron **10**, no 11.
 
 **Consecuencia para `diagnose_software_update`:** `deepSleepModeActive` y
 `stateOfCharge` vinieron vacíos, así que ni la hipótesis del sueño profundo ni
@@ -442,6 +480,11 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
     pasó de 48.260 a 48.278 km y una presión trasera subió de 220 a 230 kPa, con
     sellos de las 17:59 de ese día.
 
+    **Corregido el 2026-09-13 para uno de los 11:** `checkControlMessages` llegó
+    con valor en cuanto el coche tuvo un aviso. Su vacío no era "este U11 no lo
+    emite", era probablemente "no hay nada que avisar". Para los otros diez la
+    conclusión se mantiene.
+
 11. **Hay un grupo de descriptores congelado, y arruina la serie.** En esa misma
     lectura, nueve descriptores conservaron el sello `2026-09-07T08:55:27.912Z`
     de veinte horas antes: `battery.voltage`, `serviceDistance.next` y
@@ -479,6 +522,22 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
     Queda una prueba más barata que confirmaría el mecanismo: leer tras una
     noche entera parado. Si el grupo se moviera entonces, el disparador sería el
     ciclo de sueño profundo y no el uso del coche.
+
+    **Reabierto el 2026-09-13: el grupo sí se mueve.** Cinco días y 157 km
+    después, los nueve traían un sello nuevo y común, `2026-09-13T17:21:47.172Z`.
+    Se movieron juntos, como grupo. Pero la prueba de la noche no quedó hecha:
+    entre el 8 y el 13 no se leyó, así que no se sabe cuántas veces se refrescó
+    ni con qué disparador. Lo que sí se sabe es que **no fue en reposo**: el
+    voltaje nuevo era **14,35 V**, y el del 7 de septiembre, **14,39 V**. Los
+    dos son tensión de alternador, con el motor en marcha.
+
+    **Conclusión operativa, corregida:** la REST sí añade puntos a la serie,
+    pocos, y hasta ahora ninguno sirve para juzgar la batería en reposo.
+    `diagnose_software_update` deja fuera todo voltaje de 13,5 V o más: sin esa
+    regla, dos lecturas de alternador bastaban para declarar la hipótesis de la
+    batería "debilitada", una conclusión que la evidencia no sostiene. Con las
+    dos lecturas reales se queda en `SIN VEREDICTO` y explica por qué. La Fase 2
+    sigue siendo la única vía conocida para una serie en reposo.
 
 ---
 

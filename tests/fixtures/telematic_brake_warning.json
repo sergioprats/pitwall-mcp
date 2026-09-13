@@ -1,0 +1,164 @@
+{
+  "telematicData": {
+    "vehicle.electricalSystem.battery.stateOfChargePlausibility": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.conditionBasedServices": {
+      "timestamp": "2026-09-13T18:03:41.869Z",
+      "unit": null,
+      "value": "[{\"date\":\"null\",\"description\":\"Change due soon. Please arrange an appointment with your Service Partner.\",\"id\":2,\"messageType\":\"CBS\",\"status\":\"PENDING\",\"title\":\"Front Brake\",\"text\":\"-\",\"unitOfLengthRemaining\":\"1900\"},{\"date\":\"2027-01\",\"description\":\"Next statutory vehicle inspection due by the stated date.\",\"id\":32,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Statutory vehicle inspection\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2027-07\",\"description\":\"Next service due when the stated distance has been covered or by the specified date.\",\"id\":1,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Engine oil\",\"text\":\"-\",\"unitOfLengthRemaining\":\"14000\"},{\"date\":\"2027-10\",\"description\":\"Next change due at the latest by the stated date.\",\"id\":3,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Brake fluid\",\"text\":\"-\",\"unitOfLengthRemaining\":\"-\"},{\"date\":\"2029-07\",\"description\":\"-\",\"id\":100,\"messageType\":\"CBS\",\"status\":\"OK\",\"title\":\"Vehicle check\",\"text\":\"-\",\"unitOfLengthRemaining\":\"45000\"}]"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-13T18:03:41.869Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.status.serviceDistance.yellow": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "2000"
+    },
+    "vehicle.electricalSystem.battery.voltage": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": "V",
+      "value": "14.35"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-13T18:13:49.000Z",
+      "unit": "kPa",
+      "value": "270"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-13T18:03:41.869Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.electricalSystem.battery.stateOfCharge": {
+      "timestamp": null,
+      "unit": "%",
+      "value": null
+    },
+    "vehicle.drivetrain.engine.isActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.conditionBasedServicesCount": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "9"
+    },
+    "vehicle.status.serviceDistance.next": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "13560"
+    },
+    "vehicle.status.conditionBasedServicesAverageDistancePerDay": {
+      "timestamp": null,
+      "unit": "km",
+      "value": null
+    },
+    "vehicle.vehicle.travelledDistance": {
+      "timestamp": "2026-09-13T18:13:49.000Z",
+      "unit": "km",
+      "value": "48440"
+    },
+    "vehicle.status.serviceTime.hUandAuServiceYellow": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": "months",
+      "value": "4"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-13T18:03:41.869Z",
+      "unit": "kPa",
+      "value": "270"
+    },
+    "vehicle.vehicle.deepSleepModeActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.serviceTime.yellow": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": "weeks",
+      "value": "4"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-13T18:13:49.000Z",
+      "unit": "kPa",
+      "value": "260"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.status.checkControlMessages": {
+      "timestamp": "2026-09-13T18:11:50.811Z",
+      "unit": null,
+      "value": "[{\"date\":null,\"description\":null,\"id\":907,\"messageType\":\"CCM\",\"status\":\"NULL\",\"title\":null,\"text\":\"The brake pads need to be replaced.\",\"unitOfLengthRemaining\":\"48376\"}]"
+    },
+    "vehicle.status.serviceTime.inspectionDateLegal": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "17.01.2027 00:00:00 UTC"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.recharge": {
+      "timestamp": "2026-09-13T19:53:59.781Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.drivetrain.engine.isIgnitionOn": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.replace": {
+      "timestamp": "2026-09-13T19:53:59.781Z",
+      "unit": null,
+      "value": "200"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-13T18:13:49.000Z",
+      "unit": "kPa",
+      "value": "270"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-13T18:03:41.869Z",
+      "unit": "kPa",
+      "value": "270"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.vehicle.averageWeeklyDistanceLongTerm": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.vehicle.averageWeeklyDistanceShortTerm": {
+      "timestamp": "2026-09-13T17:21:47.172Z",
+      "unit": null,
+      "value": "570"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-13T18:13:49.000Z",
+      "unit": "kPa",
+      "value": "250"
+    }
+  }
+}

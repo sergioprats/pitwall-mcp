@@ -23,12 +23,47 @@ from pitwall_mcp.telematic import (
     TelematicSnapshot,
     ValueState,
     parse_cbs,
+    parse_check_control,
 )
 
 
 def real() -> TelematicSnapshot:
     """The snapshot as this U11 really answered."""
     return TelematicSnapshot.from_payload(load_fixture("telematic_real.json"))
+
+
+def brake_warning() -> TelematicSnapshot:
+    """The answer of 2026-09-13, 157 km later: front brakes PENDING, one CCM."""
+    return TelematicSnapshot.from_payload(load_fixture("telematic_brake_warning.json"))
+
+
+# --- Check Control messages ------------------------------------------------
+
+
+def test_check_control_needs_a_second_json_decode():
+    """Like CBS, the value is a string holding a JSON array."""
+    messages = parse_check_control(brake_warning())
+
+    assert [message.text for message in messages] == ["The brake pads need to be replaced."]
+    assert messages[0].id == 907
+
+
+def test_the_ccm_status_string_null_is_not_a_status():
+    """CCM writes the literal "NULL", in capitals, where CBS would write "OK"."""
+    assert parse_check_control(brake_warning())[0].status is None
+
+
+def test_the_ccm_distance_field_is_a_mileage_not_a_remaining_distance():
+    """Same key as CBS, other meaning: 48376 sits between the odometer readings
+    of 8 Sep (48283) and 13 Sep (48440), while CBS gives the brakes 1900 km."""
+    message = parse_check_control(brake_warning())[0]
+
+    assert message.mileage_km == 48376
+
+
+def test_empty_check_control_yields_none():
+    """No value means nothing to decode, not an empty list pretending to know."""
+    assert parse_check_control(real()) is None
 
 
 # --- The four states -------------------------------------------------------

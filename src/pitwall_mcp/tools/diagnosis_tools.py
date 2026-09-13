@@ -31,7 +31,7 @@ from ..formatting import (
 from ..storage.history import Reading
 from ..telematic import TelematicSnapshot, parse_cbs
 from .readiness import require_ready
-from .telematic_tools import render_cbs
+from .telematic_tools import render_cbs, render_check_control, render_urgent_cbs
 
 
 async def get_maintenance_summary(
@@ -45,6 +45,7 @@ async def get_maintenance_summary(
     require_ready(settings, needs_vin=True, needs_container=True)
     result = await adapter.get_telematic_data(settings.vin, settings.container_id)
     snapshot = TelematicSnapshot.from_payload(result.payload)
+    cbs = parse_cbs(snapshot, reported_count=snapshot.get(CBS_COUNT).as_int())
 
     lines = ["RESUMEN DE MANTENIMIENTO", ""]
 
@@ -64,13 +65,16 @@ async def get_maintenance_summary(
         threshold = yellow.as_int()
         if remaining is not None and threshold is not None and remaining <= threshold:
             lines.append(f"  Por debajo del umbral de preaviso ({threshold} km).")
+    lines.extend(render_urgent_cbs(cbs))
 
     inspection = snapshot.get(INSPECTION_DATE_LEGAL)
     if inspection.has_value:
         lines.append(f"Proxima inspeccion legal (ITV): {inspection.value}")
 
     lines.append("")
-    lines.extend(render_cbs(parse_cbs(snapshot, reported_count=snapshot.get(CBS_COUNT).as_int())))
+    lines.extend(render_cbs(cbs))
+    lines.append("")
+    lines.extend(render_check_control(snapshot))
 
     lines.append("")
     lines.append("Presiones de neumaticos:")
@@ -111,6 +115,11 @@ async def get_maintenance_summary(
 #: the resting state, and `isIgnitionOn` is empty on this vehicle.
 LOW_VOLTAGE = 12.2
 
+#: Above this the alternator is charging. No 12V battery rests this high, so
+#: such a reading says nothing about the resting state the update check cares
+#: about. Both voltages this vehicle has sent so far (14.39 V, 14.35 V) are here.
+CHARGING_VOLTAGE = 13.5
+
 #: Below this many distinct observations the tool refuses to talk about trends.
 MIN_OBSERVATIONS = 2
 
@@ -148,29 +157,56 @@ def _trend(series: list[Reading]) -> str:
     return f"se mantiene plana, {ends}"
 
 
+def _is_charging(reading: Reading) -> bool:
+    """True when the reading is an alternator voltage rather than a battery at rest."""
+    value = parse_numeric(reading.value)
+    return value is not None and value >= CHARGING_VOLTAGE
+
+
 def _verdict(series: list[Reading], *, ignition_known: bool) -> list[str]:
     """The bounded verdict. Never stronger than the evidence behind it."""
-    numbers = [v for v in (parse_numeric(r.value) for r in series) if v is not None]
-    count = len(numbers)
+    numeric = [r for r in series if parse_numeric(r.value) is not None]
+    count = len(numeric)
+    resting = [r for r in numeric if not _is_charging(r)]
+    charging = count - len(resting)
 
-    if count < MIN_OBSERVATIONS:
+    if len(resting) < MIN_OBSERVATIONS:
         counted = "1 observacion distinta" if count == 1 else f"{count} observaciones distintas"
-        return [
+        lines = [
             "SIN VEREDICTO.",
             f"El historico local tiene {counted} de voltaje de la bateria de 12V, y hacen "
-            f"falta al menos 2 observaciones separadas en el tiempo para hablar de una "
-            f"tendencia.",
-            "Y hay una mala noticia sobre como conseguirlas: verificado el 2026-09-08 en "
-            "tres lecturas, battery.voltage no se ha refrescado en 34 horas, ni con el "
-            "coche en marcha ni justo despues de rodar. Comparte sello de tiempo exacto "
-            "con otros ocho descriptores que tampoco se movieron, asi que puede que "
-            "repetir la lectura REST no anada ningun punto a esta serie. Si eso se "
-            "confirma, la unica via para tener serie real es el streaming MQTT de la "
-            "Fase 2, que hoy es diseno y no codigo.",
+            f"falta al menos 2 observaciones separadas en el tiempo, y tomadas en reposo, "
+            f"para hablar de una tendencia.",
         ]
+        if charging:
+            lines.append(
+                f"De ellas, {charging} pasa{'n' if charging > 1 else ''} de "
+                f"{CHARGING_VOLTAGE} V: eso es el alternador cargando con el motor en "
+                f"marcha, y no dice nada de la bateria en reposo, que es lo que cuenta "
+                f"para la actualizacion. No se usa{'n' if charging > 1 else ''}."
+            )
+        lines.append(
+            "Sobre como conseguir mas puntos: battery.voltage viaja en un grupo de nueve "
+            "descriptores que por REST se refresca muy de tarde en tarde. Su sello se "
+            "quedo 34 horas quieto a lo largo de cuatro lecturas y dos trayectos (7 y 8 "
+            "de septiembre de 2026); la siguiente lectura, el 13, ya lo traia renovado, "
+            "pero con el motor en marcha (14.35 V). Repetir la lectura REST puede anadir "
+            "puntos, pocos y, hasta ahora, siempre con el alternador cargando. Una serie "
+            "en reposo necesita el streaming MQTT de la Fase 2, que hoy es diseno y no "
+            "codigo."
+        )
+        return lines
 
-    lowest = min(numbers)
-    lines = [f"Serie de {count} observaciones distintas; {_trend(series)}."]
+    lowest = min(parse_numeric(r.value) for r in resting)
+    lines = [f"Serie de {count} observaciones distintas."]
+    if charging:
+        lines.append(
+            f"{charging} pasa{'n' if charging > 1 else ''} de {CHARGING_VOLTAGE} V "
+            f"(alternador cargando) y se deja{'n' if charging > 1 else ''} fuera. En las "
+            f"{len(resting)} restantes el voltaje {_trend(resting)}."
+        )
+    else:
+        lines.append(f"El voltaje {_trend(resting)}.")
     if not ignition_known:
         lines.append(
             "Esa pendiente mezcla lecturas tomadas en condiciones desconocidas: sin "

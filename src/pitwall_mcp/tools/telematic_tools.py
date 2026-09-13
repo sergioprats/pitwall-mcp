@@ -15,13 +15,21 @@ from ..catalogue import Catalogue
 from ..config import Settings
 from ..descriptors import (
     CBS_COUNT,
+    CHECK_CONTROL_MESSAGES,
     CONTAINER_DESCRIPTORS,
     SERVICE_DISTANCE_NEXT,
     SERVICE_DISTANCE_YELLOW,
     TRAVELLED_DISTANCE,
 )
 from ..formatting import explain_missing, format_moment
-from ..telematic import CbsBlock, TelematicSnapshot, ValueState, parse_cbs
+from ..telematic import (
+    CbsBlock,
+    CbsItem,
+    TelematicSnapshot,
+    ValueState,
+    parse_cbs,
+    parse_check_control,
+)
 from .readiness import require_ready
 
 
@@ -30,6 +38,61 @@ async def _read(adapter: CarDataAdapter, settings: Settings):
     require_ready(settings, needs_vin=True, needs_container=True)
     result = await adapter.get_telematic_data(settings.vin, settings.container_id)
     return result, TelematicSnapshot.from_payload(result.payload)
+
+
+def _describe_item(item: CbsItem) -> str:
+    """One CBS item as "label [status]: distance, date"."""
+    parts = []
+    if item.distance_km is not None:
+        parts.append(f"{item.distance_km:,} km".replace(",", "."))
+    if item.date_text:
+        parts.append(f"hasta {item.date_text}")
+    if not parts:
+        parts.append("sin plazo informado por BMW")
+    estado = f" [{item.status}]" if item.status else ""
+    return f"{item.label}{estado}: {', '.join(parts)}"
+
+
+def render_urgent_cbs(block: CbsBlock | None) -> list[str]:
+    """Flag the CBS items BMW no longer marks OK.
+
+    Verified 2026-09-13: with the front brakes PENDING at 1900 km,
+    serviceDistance.next said 13560. The global figure alone would have hidden
+    the one item that actually needed attention.
+    """
+    urgent = [item for item in block.items if not item.is_ok] if block else []
+    if not urgent:
+        return []
+    return [
+        "  OJO: hay partidas CBS que BMW ya no marca como OK; no te fies solo de la "
+        f"cifra global: {'; '.join(_describe_item(item) for item in urgent)}."
+    ]
+
+
+def render_check_control(snapshot: TelematicSnapshot) -> list[str]:
+    """Render the Check Control messages, or say exactly why there are none."""
+    entry = snapshot.get(CHECK_CONTROL_MESSAGES)
+    if not entry.has_value:
+        return [
+            "Check Control: el campo llega vacio. BMW no documenta si vacio significa "
+            "que no hay avisos o que no hay lectura, asi que no se da por despejado."
+        ]
+    messages = parse_check_control(snapshot)
+    if messages is None:
+        return [f"Check Control: llega un valor que no se ha podido decodificar: {entry.value!r}."]
+    if not messages:
+        return ["Check Control: la lista llega vacia, sin avisos activos."]
+
+    counted = "1 aviso" if len(messages) == 1 else f"{len(messages)} avisos"
+    lines = [f"Check Control: {counted}   ({format_moment(entry.moment)})"]
+    for message in messages:
+        mileage = (
+            f" (registrado a los {message.mileage_km:,} km)".replace(",", ".")
+            if message.mileage_km is not None
+            else ""
+        )
+        lines.append(f"  - {message.text or 'aviso sin texto'}{mileage}")
+    return lines
 
 
 def render_cbs(block: CbsBlock | None) -> list[str]:
@@ -45,15 +108,7 @@ def render_cbs(block: CbsBlock | None) -> list[str]:
     for item in sorted(
         block.items, key=lambda i: (i.distance_km is None, i.distance_km or 0)
     ):
-        parts = []
-        if item.distance_km is not None:
-            parts.append(f"{item.distance_km:,} km".replace(",", "."))
-        if item.date_text:
-            parts.append(f"hasta {item.date_text}")
-        if not parts:
-            parts.append("sin plazo informado por BMW")
-        estado = f" [{item.status}]" if item.status else ""
-        lines.append(f"  - {item.label}{estado}: {', '.join(parts)}")
+        lines.append(f"  - {_describe_item(item)}")
 
     if block.count_matches is False:
         lines.append(
@@ -166,9 +221,12 @@ async def get_vehicle_status(
             else:
                 note = f"  (umbral de preaviso: {threshold} km, faltan {remaining - threshold})"
         lines.append(f"Proximo servicio en: {remaining} km{note}")
+    lines.extend(render_urgent_cbs(block))
 
     lines.append("")
     lines.extend(render_cbs(block))
+    lines.append("")
+    lines.extend(render_check_control(snapshot))
 
     lines.append("")
     lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))

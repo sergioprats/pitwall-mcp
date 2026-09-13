@@ -210,13 +210,28 @@ async def test_it_reports_the_mileage(adapter, ready_settings):
     assert "48.260 km" in text
 
 
-async def test_it_names_the_two_ends_of_the_trend_not_only_the_drop(adapter, ready_settings):
-    """ "Baja 2.34 V" hides that it went from a charging voltage to a resting one."""
+async def test_the_trend_is_drawn_only_across_voltages_that_could_be_at_rest(
+    adapter, ready_settings
+):
+    """14.39 V is the alternator. A trend from it to 12.05 V would be a fake drop."""
     seed_voltage(adapter, ["12.55", "12.30", "12.05"])
 
     text = await diagnosis_tools.diagnose_software_update(adapter, ready_settings)
 
-    assert "de 14.39 V a 12.05 V" in text
+    assert "de 12.55 V a 12.05 V" in text
+    assert "de 14.39 V" not in text
+
+
+async def test_charging_voltages_alone_give_no_verdict(adapter, ready_settings):
+    """The real history of 2026-09-13: 14.39 V and 14.35 V, both with the engine
+    running. Two points, and neither says anything about the battery at rest."""
+    seed_voltage(adapter, ["14.35"])
+
+    text = await diagnosis_tools.diagnose_software_update(adapter, ready_settings)
+
+    assert "SIN VEREDICTO" in text
+    assert "alternador" in text
+    assert "debilitada" not in text
 
 
 async def test_a_trend_across_unknown_conditions_is_flagged_as_such(adapter, ready_settings):
@@ -235,13 +250,13 @@ async def test_the_single_observation_line_is_written_in_plain_spanish(adapter, 
     assert "distinta(s)" not in text
 
 
-async def test_it_warns_that_repeating_the_rest_read_may_not_add_points(adapter, ready_settings):
-    """Verified 2026-09-08: voltage did not refresh across 20 h and a drive.
-
-    Telling the user to "read again in a few days" would be advice we have
-    evidence against, which is worse than saying nothing.
+async def test_it_says_how_rarely_rest_adds_a_usable_point(adapter, ready_settings):
+    """Verified 2026-09-13: the frozen group did move at last, with the engine
+    running. "REST never adds a point" is now false; "REST adds points at rest"
+    was never shown. Both halves have to be said.
     """
     text = await diagnosis_tools.diagnose_software_update(adapter, ready_settings)
 
-    assert "puede que repetir la lectura REST no anada ningun punto" in text
+    assert "puede que repetir la lectura REST no anada ningun punto" not in text
+    assert "alternador" in text
     assert "streaming" in text

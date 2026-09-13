@@ -30,7 +30,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Final
 
-from .descriptors import CONDITION_BASED_SERVICES, NO_MEASUREMENT
+from .descriptors import CHECK_CONTROL_MESSAGES, CONDITION_BASED_SERVICES, NO_MEASUREMENT
 from .storage.db import parse_iso
 
 #: Strings BMW uses inside the CBS block to mean "this field does not apply".
@@ -172,6 +172,32 @@ def _clean(value: Any) -> str | None:
     return None if text.lower() in CBS_SENTINELS else text
 
 
+def _clean_int(value: Any) -> int | None:
+    """Return the number BMW sent as a string, or `None` for a sentinel."""
+    text = _clean(value)
+    try:
+        return int(text) if text is not None else None
+    except ValueError:
+        return None
+
+
+def _decode_array(entry: TelematicEntry) -> list[dict[str, Any]] | None:
+    """Second `json.loads` of a value that is a string holding a JSON array.
+
+    `None` when there is no value or it does not decode to a list: a partial
+    guess would be worse than admitting the block is unreadable.
+    """
+    if not entry.has_value:
+        return None
+    try:
+        decoded = json.loads(str(entry.value))
+    except (TypeError, json.JSONDecodeError):
+        return None
+    if not isinstance(decoded, list):
+        return None
+    return [item for item in decoded if isinstance(item, dict)]
+
+
 @dataclass(frozen=True)
 class CbsItem:
     """One CBS entry: a maintenance item with a date, a distance, or both."""
@@ -192,20 +218,20 @@ class CbsItem:
     @classmethod
     def from_raw(cls, raw: dict[str, Any]) -> CbsItem:
         """Build one item, turning every sentinel into `None`."""
-        distance = _clean(raw.get("unitOfLengthRemaining"))
-        try:
-            distance_km = int(distance) if distance is not None else None
-        except ValueError:
-            distance_km = None
         raw_id = raw.get("id")
         return cls(
             id=raw_id if isinstance(raw_id, int) else None,
             title=str(raw.get("title") or "sin titulo"),
             status=_clean(raw.get("status")),
             date_text=_clean(raw.get("date")),
-            distance_km=distance_km,
+            distance_km=_clean_int(raw.get("unitOfLengthRemaining")),
             description=_clean(raw.get("description")),
         )
+
+    @property
+    def is_ok(self) -> bool:
+        """True only when BMW itself marks the item OK."""
+        return self.status == "OK"
 
 
 @dataclass(frozen=True)
@@ -233,16 +259,57 @@ def parse_cbs(snapshot: TelematicSnapshot, reported_count: int | None = None) ->
     Its `value` is a STRING containing JSON, so this decodes twice. A payload
     that cannot be decoded yields `None` rather than a partial guess.
     """
-    entry = snapshot.get(CONDITION_BASED_SERVICES)
-    if not entry.has_value:
-        return None
-    try:
-        decoded = json.loads(str(entry.value))
-    except (TypeError, json.JSONDecodeError):
-        return None
-    if not isinstance(decoded, list):
+    decoded = _decode_array(snapshot.get(CONDITION_BASED_SERVICES))
+    if decoded is None:
         return None
     return CbsBlock(
-        items=[CbsItem.from_raw(item) for item in decoded if isinstance(item, dict)],
+        items=[CbsItem.from_raw(item) for item in decoded],
         reported_count=reported_count,
     )
+
+
+# --- Check Control messages ------------------------------------------------
+
+
+@dataclass(frozen=True)
+class CheckControlMessage:
+    """One Check Control message: a warning the car shows on its own display.
+
+    Verified against the real answer of 2026-09-13, the first time this field
+    carried a value. It uses the same keys as a CBS entry, but not the same
+    meanings nor the same sentinels:
+
+    * `status` came as the literal string `"NULL"`, while `date`, `title` and
+      `description` came as real JSON nulls.
+    * `unitOfLengthRemaining` is NOT a remaining distance. It read 48376 while
+      the odometer went from 48283 (8 Sep) to 48440 (13 Sep), and CBS gave the
+      same front brakes 1900 km left. It is kept as the mileage the message
+      refers to; BMW does not document the field.
+    """
+
+    id: int | None
+    text: str | None
+    status: str | None
+    mileage_km: int | None
+
+    @classmethod
+    def from_raw(cls, raw: dict[str, Any]) -> CheckControlMessage:
+        """Build one message, turning every sentinel into `None`."""
+        raw_id = raw.get("id")
+        return cls(
+            id=raw_id if isinstance(raw_id, int) else None,
+            text=_clean(raw.get("text")),
+            status=_clean(raw.get("status")),
+            mileage_km=_clean_int(raw.get("unitOfLengthRemaining")),
+        )
+
+
+def parse_check_control(snapshot: TelematicSnapshot) -> list[CheckControlMessage] | None:
+    """Decode `checkControlMessages`, or `None` when it carries no usable value.
+
+    Same trap as CBS: the value is a string holding a JSON array.
+    """
+    decoded = _decode_array(snapshot.get(CHECK_CONTROL_MESSAGES))
+    if decoded is None:
+        return None
+    return [CheckControlMessage.from_raw(item) for item in decoded]

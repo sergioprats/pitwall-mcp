@@ -24,9 +24,70 @@ def adapter(ready_settings, db, fake_client):
 
 
 @pytest.fixture
+def brake_adapter(ready_settings, db, fake_client):
+    """An adapter serving the 2026-09-13 answer: brakes PENDING, one CCM."""
+    fake_client.responses["get_telematic_data"] = load_fixture("telematic_brake_warning.json")
+    return CarDataAdapter(ready_settings, db=db, tokens=FakeTokens())
+
+
+@pytest.fixture
 def catalogue_obj(catalogue) -> Catalogue:
     """The real catalogue."""
     return catalogue
+
+
+# --- Check Control and the most urgent CBS item ----------------------------
+
+
+async def test_status_shows_the_check_control_message(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    text = await telematic_tools.get_vehicle_status(brake_adapter, ready_settings, catalogue_obj)
+
+    assert "The brake pads need to be replaced." in text
+    assert "48.376 km" in text
+
+
+async def test_summary_shows_the_check_control_message(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "The brake pads need to be replaced." in text
+
+
+async def test_an_empty_check_control_is_not_read_as_all_clear(
+    adapter, ready_settings, catalogue_obj
+):
+    """Empty coincided with no warnings once; BMW never said that is what it means."""
+    text = await telematic_tools.get_vehicle_status(adapter, ready_settings, catalogue_obj)
+
+    check_control = next(
+        (line for line in text.splitlines() if line.startswith("Check Control")), ""
+    )
+    assert check_control
+    assert "vacio" in check_control
+    assert "ningun aviso" not in check_control
+
+
+async def test_a_pending_item_is_not_hidden_behind_the_global_figure(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    """serviceDistance.next said 13560 km while the front brakes were PENDING at 1900."""
+    for tool in (telematic_tools.get_vehicle_status, diagnosis_tools.get_maintenance_summary):
+        text = await tool(brake_adapter, ready_settings, catalogue_obj)
+
+        warning = next((line for line in text.splitlines() if "OJO" in line), "")
+        assert "Frenos delanteros [PENDING]" in warning
+        assert "1.900 km" in warning
+
+
+async def test_no_urgency_warning_when_every_item_is_ok(adapter, ready_settings, catalogue_obj):
+    text = await telematic_tools.get_vehicle_status(adapter, ready_settings, catalogue_obj)
+
+    assert "OJO" not in text
 
 
 # --- get_vehicle_status ----------------------------------------------------

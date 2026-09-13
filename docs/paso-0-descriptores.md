@@ -209,6 +209,10 @@ Vacios en esta lectura: las cuatro `tire.temperature`, `battery.stateOfCharge`,
 `isActive`, `checkControlMessages` y
 `conditionBasedServicesAverageDistancePerDay`.
 
+**Correccion del 2026-09-13:** `checkControlMessages` llego con valor en cuanto
+el coche tuvo un aviso (pastillas de freno). Su vacio no era "no lo emite". La
+estructura del aviso esta en `CLAUDE.md`.
+
 **Duele especialmente** que `deepSleepModeActive` y `stateOfCharge` esten vacios:
 son dos de las tres senales que `diagnose_software_update` necesita.
 
