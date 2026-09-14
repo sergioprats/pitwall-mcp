@@ -308,6 +308,56 @@ en una lectura real y grabarla como fixture.
 La posición (`navigation.currentLocation.*`) queda fuera a propósito, por
 privacidad. Si algún día entra, será opcional y desactivada por defecto.
 
+**Resultado de la prueba, 2026-09-14 a las 14:30 UTC.** BMW aceptó los 42
+descriptores en un solo `POST` (código 200, 1 petición). El contenedor nuevo
+tiene otro id de 13 caracteres. Primera lectura, grabada en
+`tests/fixtures/telematic_extended.json`. **Llegan 7 de los 10:**
+
+| Descriptor | Valor | Sello | Observación |
+|---|---|---|---|
+| `fuelSystem.level` | `58` % | 13:51:32 | grupo de la medida real |
+| `fuelSystem.remainingFuel` | `24`, **unidad `null`** | 13:49:14 | el catálogo dice litros, ±6 L |
+| `lastRemainingRange` | `395` km | 13:51:32 | |
+| `consumptionOverLifeTime.overall.fuel` | `226.32` l | **2024-10-30** | congelado casi dos años |
+| `consumptionOverLifeTime.overall.referenceDistance` | `2826.3` km | **2024-10-30** | ídem |
+| `diagnosticTroubleCodes.raw` | XML, ver abajo | 13:49:14 | |
+| `engine.ect` | `85` °C | 13:49:14 | recién aparcado tras el viaje |
+
+Vacíos: `navigation.remainingRange`, `serviceDemand.defect.id` e `isMoving`. El
+de `isMoving` duele: era la esperanza de distinguir un voltaje de alternador de
+uno en reposo.
+
+**Consumo OBFCM: no es el consumo de hoy.** 226,32 l en 2.826,3 km son 8,0 l/100
+km, pero sellados el 2024-10-30, cuando el coche tenía unos 2.800 km. El
+catálogo describe el OBFCM como valores que se transfieren en el taller, por
+cable. Probablemente solo se actualiza en una visita al taller: la cita de las
+pastillas es la ocasión de comprobarlo. Hasta entonces **no sirve para una
+serie**, y ninguna herramienta puede presentarlo como consumo actual.
+
+**Memoria de averías: XML dentro de la cadena.**
+
+```xml
+<dtcData dtcCount="72">
+  <dtc ecuAddress="29">X00001</dtc>
+  ...
+</dtcData>
+```
+
+- Solo lleva `ecuAddress` (dirección de la centralita, decimal) y el código.
+  **Sin estado, sin fecha y sin descripción**: no se sabe si un código está
+  activo o solo almacenado, ni cuándo apareció.
+- **Otra discrepancia de contador: `dtcCount="72"` con 44 entradas `<dtc>`.** El
+  XML está completo (1.615 caracteres, cerrado). Sin explicación, como el 9
+  contra 5 de CBS: se dan los dos números.
+- 44 códigos distintos repartidos en 13 centralitas. La que más tiene es la 16,
+  con 11.
+- **El significado de cada código no está en el catálogo y no se inventa.** Los
+  códigos de BMW son del fabricante. Una herramienta puede contarlos, agruparlos
+  y, sobre todo, **compararlos entre lecturas**: códigos nuevos, códigos
+  borrados tras el taller. Traducirlos no.
+
+`conditionBasedServices` siguió vacío también en esta lectura.
+
 ## Paso 0: lo que NO existe
 
 Verificado por búsqueda exhaustiva en el catálogo. Está prohibido

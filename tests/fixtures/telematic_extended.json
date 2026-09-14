@@ -1,0 +1,214 @@
+{
+  "telematicData": {
+    "vehicle.electricalSystem.battery.stateOfChargePlausibility": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.conditionBasedServices": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-14T13:47:27.732Z",
+      "unit": "kPa",
+      "value": "290"
+    },
+    "vehicle.isMoving": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.drivetrain.lastRemainingRange": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "km",
+      "value": "395"
+    },
+    "vehicle.status.serviceDistance.yellow": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "2000"
+    },
+    "vehicle.electricalSystem.battery.voltage": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": "V",
+      "value": "13.92"
+    },
+    "vehicle.drivetrain.fuelSystem.remainingFuel": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "24"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.drivetrain.fuelSystem.level": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "%",
+      "value": "58"
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-14T13:47:27.732Z",
+      "unit": "kPa",
+      "value": "290"
+    },
+    "vehicle.electricalSystem.battery.stateOfCharge": {
+      "timestamp": null,
+      "unit": "%",
+      "value": null
+    },
+    "vehicle.drivetrain.engine.isActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.conditionBasedServicesCount": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "9"
+    },
+    "vehicle.status.serviceDistance.next": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "13460"
+    },
+    "vehicle.status.conditionBasedServicesAverageDistancePerDay": {
+      "timestamp": null,
+      "unit": "km",
+      "value": null
+    },
+    "vehicle.vehicle.travelledDistance": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "km",
+      "value": "48713"
+    },
+    "vehicle.status.serviceTime.hUandAuServiceYellow": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": "months",
+      "value": "4"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressureTarget": {
+      "timestamp": "2026-09-14T13:47:27.732Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.drivetrain.internalCombustionEngine.engine.ect": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": "°C",
+      "value": "85"
+    },
+    "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance": {
+      "timestamp": "2024-10-30T15:03:24.745Z",
+      "unit": "km",
+      "value": "2826.3"
+    },
+    "vehicle.vehicle.deepSleepModeActive": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.serviceTime.yellow": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": "weeks",
+      "value": "4"
+    },
+    "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": "-",
+      "value": "<dtcData dtcCount=\"72\">\n  <dtc ecuAddress=\"29\">X00001</dtc>\n  <dtc ecuAddress=\"29\">X00002</dtc>\n  <dtc ecuAddress=\"29\">X00003</dtc>\n  <dtc ecuAddress=\"29\">X00004</dtc>\n  <dtc ecuAddress=\"29\">X00005</dtc>\n  <dtc ecuAddress=\"13\">X00006</dtc>\n  <dtc ecuAddress=\"13\">X00007</dtc>\n  <dtc ecuAddress=\"24\">X0008</dtc>\n  <dtc ecuAddress=\"67\">X00009</dtc>\n  <dtc ecuAddress=\"67\">X0000A</dtc>\n  <dtc ecuAddress=\"16\">X0000B</dtc>\n  <dtc ecuAddress=\"16\">X0000C</dtc>\n  <dtc ecuAddress=\"16\">X0000D</dtc>\n  <dtc ecuAddress=\"16\">X0000E</dtc>\n  <dtc ecuAddress=\"16\">X0000F</dtc>\n  <dtc ecuAddress=\"16\">X00010</dtc>\n  <dtc ecuAddress=\"16\">X00011</dtc>\n  <dtc ecuAddress=\"16\">X00012</dtc>\n  <dtc ecuAddress=\"16\">X00013</dtc>\n  <dtc ecuAddress=\"16\">X00014</dtc>\n  <dtc ecuAddress=\"16\">X00015</dtc>\n  <dtc ecuAddress=\"86\">X00016</dtc>\n  <dtc ecuAddress=\"86\">X00017</dtc>\n  <dtc ecuAddress=\"93\">X00018</dtc>\n  <dtc ecuAddress=\"93\">X00019</dtc>\n  <dtc ecuAddress=\"93\">X0001A</dtc>\n  <dtc ecuAddress=\"93\">X0001B</dtc>\n  <dtc ecuAddress=\"93\">X0001C</dtc>\n  <dtc ecuAddress=\"93\">X001D</dtc>\n  <dtc ecuAddress=\"94\">X0001E</dtc>\n  <dtc ecuAddress=\"94\">X0001F</dtc>\n  <dtc ecuAddress=\"114\">X00020</dtc>\n  <dtc ecuAddress=\"68\">X00021</dtc>\n  <dtc ecuAddress=\"68\">X00022</dtc>\n  <dtc ecuAddress=\"68\">X00023</dtc>\n  <dtc ecuAddress=\"68\">X00024</dtc>\n  <dtc ecuAddress=\"68\">X00025</dtc>\n  <dtc ecuAddress=\"68\">X00026</dtc>\n  <dtc ecuAddress=\"70\">X00027</dtc>\n  <dtc ecuAddress=\"55\">X00028</dtc>\n  <dtc ecuAddress=\"55\">X00029</dtc>\n  <dtc ecuAddress=\"57\">X002A</dtc>\n  <dtc ecuAddress=\"57\">X002B</dtc>\n  <dtc ecuAddress=\"57\">X002C</dtc>\n</dtcData>\n"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressure": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "kPa",
+      "value": "270"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.status.checkControlMessages": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "[{\"date\":null,\"description\":null,\"id\":907,\"messageType\":\"CCM\",\"status\":\"NULL\",\"title\":null,\"text\":\"The brake pads need to be replaced.\",\"unitOfLengthRemaining\":\"48712\"}]"
+    },
+    "vehicle.cabin.infotainment.navigation.remainingRange": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.status.serviceTime.inspectionDateLegal": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "17.01.2027 00:00:00 UTC"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.recharge": {
+      "timestamp": "2026-09-14T14:30:13.792Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.drivetrain.engine.isIgnitionOn": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel": {
+      "timestamp": "2024-10-30T15:03:24.745Z",
+      "unit": "l",
+      "value": "226.32"
+    },
+    "vehicle.electricalSystem.battery.serviceDemand.replace": {
+      "timestamp": "2026-09-14T14:30:13.792Z",
+      "unit": null,
+      "value": "200"
+    },
+    "vehicle.serviceDemand.defect.id": {
+      "timestamp": null,
+      "unit": null,
+      "value": null
+    },
+    "vehicle.chassis.axle.row1.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.chassis.axle.row2.wheel.right.tire.pressureTarget": {
+      "timestamp": "2026-09-14T13:47:27.732Z",
+      "unit": "kPa",
+      "value": "280"
+    },
+    "vehicle.chassis.axle.row1.wheel.right.tire.temperature": {
+      "timestamp": null,
+      "unit": "Celsius",
+      "value": null
+    },
+    "vehicle.vehicle.averageWeeklyDistanceLongTerm": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "0"
+    },
+    "vehicle.vehicle.averageWeeklyDistanceShortTerm": {
+      "timestamp": "2026-09-14T13:49:14.941Z",
+      "unit": null,
+      "value": "570"
+    },
+    "vehicle.chassis.axle.row2.wheel.left.tire.pressure": {
+      "timestamp": "2026-09-14T13:51:32.000Z",
+      "unit": "kPa",
+      "value": "260"
+    }
+  }
+}
