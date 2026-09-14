@@ -196,6 +196,12 @@ centinelas**:
   ese momento. Es el kilometraje de la última vez que el coche envió el aviso,
   así que el ajuste con CBS del punto anterior fue casualidad. La herramienta
   dice ahora "último envío del coche a los X km".
+- **Corregido otra vez el 2026-09-14 a las 19:57 UTC: tampoco es eso.** Con el
+  coche a 48.713 km, el mismo aviso volvió con **48376**. La serie es 48376,
+  48712, 48376: no crece, y no se sabe qué es. Van dos interpretaciones y las dos
+  han caído. **No se interpreta más.** La herramienta enseña el campo pelado
+  ("campo de km del aviso"), dice que BMW no lo documenta y que ha cambiado
+  entre lecturas.
 
 ### Neumáticos
 
@@ -224,6 +230,13 @@ objetivo 290/290/280/280. El objetivo subió a la vez que las presiones, que
 suben con el neumático caliente. **Es compatible con un objetivo compensado por
 temperatura**, pero no está demostrado: las cuatro `tire.temperature` siguen
 llegando vacías, incluso tras horas de autovía.
+
+**2026-09-14 a las 19:56 UTC, en frío tras seis horas aparcado:** el objetivo
+bajó a **250 kPa en las cuatro ruedas** (a las 13:47 estaba en 290/290/280/280),
+con presiones de 260/260/250/250. Es el mismo 250 de la lectura en frío del 7
+de septiembre. **El objetivo compensado por temperatura queda casi confirmado**:
+250 en frío, hasta 290 en caliente. No llega a confirmarse del todo porque la
+temperatura sigue sin llegar.
 
 ### Tercer estado: presente y vacío
 
@@ -754,6 +767,22 @@ reinicio de cuota y la Fase 2.
     invisible. En la misma lectura, el Check Control 907 llegó re-sellado (12:09)
     sin cambiar nada: mismo texto y mismo kilometraje, 48.376. Un sello nuevo en
     un aviso no significa un aviso nuevo.
+
+    **2026-09-14 a las 19:58 UTC, con el motor recién arrancado y el coche
+    parado** (lectura pedida a propósito para esta prueba):
+
+    - `isIgnitionOn`, `isActive` e `isMoving` siguen **vacíos con el motor en
+      marcha**. Tercera confirmación: este U11 no los emite.
+    - **El grupo lento no se refrescó al arrancar.** El voltaje (13,92 V), la
+      temperatura del refrigerante, `serviceDistance.next` y **los litros del
+      depósito** conservan el sello de las 13:49. El nivel en % sí es fresco
+      (19:56). Arrancar el motor no es el disparador.
+    - **Consecuencia para `get_fuel_status`, PENDIENTE DE CORREGIR:**
+      `remainingFuel` viaja en el grupo lento. El histórico arrastra los litros
+      rancios junto a kilómetros frescos, y el consumo entre repostajes puede
+      salir mal. Hay que calcular solo con litros cuyo propio sello haya cambiado.
+    - CBS volvió a llegar con valor (frenos, 1.600 km), con el sello del grupo de
+      las presiones objetivo.
 
 ---
 
