@@ -272,6 +272,30 @@ de actualizaciones, y explica lecturas con timestamps antiguos.
 
 ---
 
+### En prueba: diez descriptores que la app oficial no enseña
+
+Añadidos el 2026-09-14 en `TRIAL_DESCRIPTORS`. Existen en el catálogo, pero
+**ninguno se ha visto llegar de este coche**:
+
+| Descriptor | Para qué |
+|---|---|
+| `vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel` + `.referenceDistance` | consumo real homologado (OBFCM): l/100 km, y por periodos con el histórico. No streamable |
+| `vehicle.drivetrain.fuelSystem.level`, `.remainingFuel` | depósito en % y litros (±6 L según el catálogo): detectar repostajes |
+| `vehicle.cabin.infotainment.navigation.remainingRange`, `vehicle.drivetrain.lastRemainingRange` | autonomía |
+| `vehicle.electronicControlUnit.diagnosticTroubleCodes.raw` | memoria de averías, pensada para el taller |
+| `vehicle.drivetrain.internalCombustionEngine.engine.ect` | temperatura del refrigerante: trayectos con el motor frío |
+| `vehicle.serviceDemand.defect.id` | diagnóstico en vivo. No streamable, **sospechoso de endpoint dedicado** como el de neumáticos |
+| `vehicle.isMoving` | si llega, distingue un voltaje de alternador de uno en reposo, que `isIgnitionOn` no puede |
+
+Solo los pide `scripts/bootstrap_containers.py`. Las herramientas no los usan, y
+un contenedor sin ellos **no los da por ausentes**: eso diría "este coche no los
+emite" sin haberlo comprobado. `get_telematic_data` los enseña aparte, en una
+sección `EN PRUEBA`. Un descriptor sale de la prueba solo después de verlo llegar
+en una lectura real y grabarla como fixture.
+
+La posición (`navigation.currentLocation.*`) queda fuera a propósito, por
+privacidad. Si algún día entra, será opcional y desactivada por defecto.
+
 ## Paso 0: lo que NO existe
 
 Verificado por búsqueda exhaustiva en el catálogo. Está prohibido
@@ -303,7 +327,7 @@ real.
 | `get_telematic_data(vin, container_id)` | `/telematicData` | confirmada |
 | `search_descriptors(query)` | catálogo local | confirmada, **no gasta cuota** |
 | `get_api_quota()` | SQLite | confirmada, no gasta cuota |
-| `get_maintenance_summary(vin)` | compuesta | confirmada, con las reservas de CBS |
+| `get_maintenance_summary(vin)` | compuesta | confirmada, con las reservas de CBS. Desde el 2026-09-14 añade una **previsión** (semanas y fecha de cada partida CBS, al ritmo de uso) y la **tendencia de neumáticos por eje** (posible fuga lenta). Ninguna de las dos gasta peticiones |
 | `get_software_version(vin)` | — | **no implementable como tal** |
 | `report_product_update_step(vin)` | `/basicData` | implementada, pero **este vehículo no devuelve `puStep`**. Verificado el 2026-09-07. La herramienta explica la ausencia y sigue aclarando que `puStep` nunca fue la versión de software |
 | `diagnose_software_update(vin)` | compuesta, sobre histórico | confirmada, con veredicto acotado |
@@ -315,6 +339,23 @@ cada partida CBS disponible con km y fecha restantes, presiones de las
 cuatro ruedas contra su objetivo, y la fecha del dato más antiguo
 utilizado. Si el desglose CBS no llega, lo dice y da el valor global de
 `serviceDistance.next`.
+
+**Previsión (2026-09-14).** Convierte los km de cada partida CBS en semanas y
+fecha, contando desde el sello del kilometraje, no desde hoy. Hay dos ritmos
+posibles: `averageWeeklyDistanceShortTerm` de BMW y el que mide el histórico
+local (sin cifra si hay menos de 2 días de lecturas). Se usa **el mayor**, para
+que la previsión nunca llegue tarde. Las fechas CBS vienen solo con mes, así que
+se comparan con el día 1 de ese mes. La salida dice que es un cálculo propio y
+no un dato de BMW.
+
+**Tendencia por eje (2026-09-14).** No compara una rueda con su propio objetivo
+a lo largo del tiempo: el objetivo se mueve con el calor y las temperaturas no
+llegan, así que eso confundiría el tiempo que hace con una fuga. Compara cada
+rueda con su pareja de eje **en la misma lectura**, que comparte temperatura y
+carga. La lectura se reconstruye con `HistoryStore.snapshots()`, que arrastra
+los valores deduplicados. El aviso exige 3 lecturas en al menos un día, y una
+diferencia que haya crecido dos pasos del sensor (20 kPa). Un paso de 10 kPa es
+ruido.
 
 ### `diagnose_software_update(vin)`
 
@@ -395,6 +436,17 @@ al día.
 sin límite de tamaño. No hay que partir el contenedor y cada lectura cuesta
 **1 petición**, como estaba presupuestado. El `containerId` que devuelve no es
 un UUID: son 13 caracteres alfanuméricos.
+
+**Contenedor ampliado, preparado el 2026-09-14 y aún sin crear.**
+`bootstrap_containers.py` pide ahora 42 descriptores: los 32 confirmados y los 10
+en prueba. No se sabe si BMW acepta 42 en un solo `POST` (32 sí los aceptó).
+Pasos, siempre a mano:
+1. `--create`, que gasta 1 petición;
+2. copiar el id nuevo al `.env`;
+3. hacer una lectura (1 petición) y grabarla como fixture;
+4. borrar el contenedor antiguo con `--delete ID` (1 petición).
+
+Hasta el paso 2, todo sigue funcionando con el contenedor de 32.
 
 ---
 

@@ -37,6 +37,7 @@ from pitwall_mcp.descriptors import (  # noqa: E402
     CONTAINER_DESCRIPTORS,
     CONTAINER_NAME,
     CONTAINER_PURPOSE,
+    TRIAL_DESCRIPTORS,
     TYRE_DIAGNOSIS,
 )
 from pitwall_mcp.storage.db import Database  # noqa: E402
@@ -46,8 +47,8 @@ ENDPOINT = "containers"
 
 
 def build_request(include_diagnosis: bool = False) -> CreateContainerRequest:
-    """Build the exact payload that would be POSTed."""
-    descriptors = list(CONTAINER_DESCRIPTORS)
+    """Build the exact payload that would be POSTed: confirmed, then on trial."""
+    descriptors = [*CONTAINER_DESCRIPTORS, *TRIAL_DESCRIPTORS]
     if include_diagnosis:
         descriptors.append(TYRE_DIAGNOSIS)
     return CreateContainerRequest(
@@ -81,6 +82,16 @@ def print_dry_run(request: CreateContainerRequest, unknown: list[str]) -> int:
     )
     print()
     print(f"Total de descriptores: {len(request.technical_descriptors)}")
+    print(
+        f"De ellos, {len(TRIAL_DESCRIPTORS)} estan en prueba (combustible, consumo, memoria "
+        f"de averias...): existen en el catalogo, pero no se sabe si este coche los "
+        f"emite. Ninguna herramienta depende de ellos hasta verlos llegar."
+    )
+    print(
+        "El contenedor actual sigue funcionando: nada cambia hasta que copies el id "
+        "nuevo a PITWALL_CONTAINER_ID en el .env. Cuando compruebes que el nuevo "
+        "funciona, borra el antiguo con --delete ID (1 peticion)."
+    )
     print(
         f"Excluido a proposito: {TYRE_DIAGNOSIS}: tiene endpoint dedicado "
         f"(/smartMaintenanceTyreDiagnosis) y /telematicData no lo devuelve. "

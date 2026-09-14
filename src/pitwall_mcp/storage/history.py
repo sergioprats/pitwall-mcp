@@ -132,6 +132,43 @@ class HistoryStore:
                 collapsed.append(reading)
         return collapsed
 
+    def snapshots(
+        self, vin: str, descriptors: tuple[str, ...]
+    ) -> list[tuple[datetime, dict[str, str | None]]]:
+        """Rebuild, for each reading event, what the response carried.
+
+        A reading event is one `record` call, so one `recorded_at`. The unique
+        index drops a value whose BMW timestamp did not move, but that value was
+        still in the response: each snapshot therefore carries forward the last
+        known value of every descriptor. This is what lets two descriptors of
+        different timestamp cohorts (a pressure and its target) be compared as
+        they stood in the same answer. Oldest event first.
+        """
+        if not descriptors:
+            return []
+        marks = ",".join("?" * len(descriptors))
+        rows = self._db.connection.execute(
+            f"""
+            SELECT descriptor, value, recorded_at
+              FROM readings
+             WHERE vin = ? AND descriptor IN ({marks})
+             ORDER BY recorded_at, id
+            """,
+            (vin, *descriptors),
+        ).fetchall()
+
+        events: list[tuple[datetime, dict[str, str | None]]] = []
+        state: dict[str, str | None] = {}
+        current: str | None = None
+        for row in rows:
+            if current is not None and row["recorded_at"] != current:
+                events.append((parse_iso(current) or utc_now(), dict(state)))
+            current = row["recorded_at"]
+            state[row["descriptor"]] = row["value"]
+        if current is not None:
+            events.append((parse_iso(current) or utc_now(), dict(state)))
+        return events
+
     def descriptor_stats(self, vin: str) -> dict[str, tuple[int, datetime | None, datetime | None]]:
         """Return `{descriptor: (count, first recorded_at, last recorded_at)}`.
 

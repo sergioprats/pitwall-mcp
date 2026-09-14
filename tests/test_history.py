@@ -57,6 +57,51 @@ def test_a_new_bmw_timestamp_creates_a_new_point(db):
     assert [reading.value for reading in series] == ["12.4", "12.1"]
 
 
+def test_snapshots_rebuild_what_each_response_carried(db):
+    """An unchanged value is deduplicated, but it was still in the response.
+
+    The target kept its BMW timestamp, so the second read inserted no row for it;
+    the snapshot of that read must still carry it, next to the new pressure.
+    """
+    store = HistoryStore(db)
+    pressure, target = "p", "t"
+    store.record(
+        FAKE_VIN,
+        {
+            pressure: {"value": "240", "unit": "kPa", "timestamp": "2026-09-07T20:40:00Z"},
+            target: {"value": "250", "unit": "kPa", "timestamp": "2026-09-07T08:00:00Z"},
+        },
+        moment=NOON,
+    )
+    store.record(
+        FAKE_VIN,
+        {
+            pressure: {"value": "230", "unit": "kPa", "timestamp": "2026-09-08T18:00:00Z"},
+            target: {"value": "250", "unit": "kPa", "timestamp": "2026-09-07T08:00:00Z"},
+        },
+        moment=NOON + timedelta(days=1),
+    )
+
+    snapshots = store.snapshots(FAKE_VIN, (pressure, target))
+
+    assert [moment for moment, _ in snapshots] == [NOON, NOON + timedelta(days=1)]
+    assert [values for _, values in snapshots] == [
+        {pressure: "240", target: "250"},
+        {pressure: "230", target: "250"},
+    ]
+
+
+def test_snapshots_ignore_descriptors_not_asked_for(db):
+    store = HistoryStore(db)
+    store.record(
+        FAKE_VIN,
+        {BATTERY_VOLTAGE: {"value": "14.39", "unit": "V", "timestamp": "2026-09-07T08:55:27Z"}},
+        moment=NOON,
+    )
+
+    assert store.snapshots(FAKE_VIN, (TRAVELLED_DISTANCE,)) == []
+
+
 def test_series_is_ordered_oldest_first(db):
     """The tools read a series, so its order has to be chronological."""
     store = HistoryStore(db)

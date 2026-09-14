@@ -8,8 +8,10 @@ survive all the way to the user.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
-from conftest import FakeTokens, load_fixture
+from conftest import FAKE_VIN, FakeTokens, load_fixture
 
 from pitwall_mcp.cardata.client import CarDataAdapter
 from pitwall_mcp.catalogue import Catalogue
@@ -238,3 +240,132 @@ async def test_the_reading_reaches_the_local_history(adapter, ready_settings, ca
 
     series = adapter.history.series(ready_settings.vin, TRAVELLED_DISTANCE)
     assert [reading.value for reading in series] == ["48260"]
+
+
+# --- Trial descriptors -----------------------------------------------------
+
+
+async def test_the_old_container_does_not_report_trial_descriptors_as_missing(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    """Until the new container is in .env, the ten trial keys are simply not asked
+    for. Calling them absent would read as "this car does not emit them"."""
+    text = await telematic_tools.get_telematic_data(brake_adapter, ready_settings, catalogue_obj)
+
+    assert "fuelSystem" not in text
+    assert "diagnosticTroubleCodes" not in text
+
+
+async def test_trial_descriptors_that_arrive_are_shown_apart(
+    ready_settings, db, fake_client, catalogue_obj
+):
+    payload = load_fixture("telematic_brake_warning.json")
+    payload["telematicData"]["vehicle.drivetrain.fuelSystem.level"] = {
+        "value": "63",
+        "unit": "%",
+        "timestamp": "2026-09-13T18:13:49.000Z",
+    }
+    fake_client.responses["get_telematic_data"] = payload
+    adapter = CarDataAdapter(ready_settings, db=db, tokens=FakeTokens())
+
+    text = await telematic_tools.get_telematic_data(adapter, ready_settings, catalogue_obj)
+
+    trial = text.split("EN PRUEBA")[-1] if "EN PRUEBA" in text else ""
+    assert "vehicle.drivetrain.fuelSystem.level" in trial
+    assert "63 %" in trial
+
+
+# --- Maintenance forecast --------------------------------------------------
+
+
+def _forecast_line(text: str, label: str) -> str:
+    """The forecast line of one CBS item, or an empty string."""
+    return next(
+        (line for line in text.splitlines() if label in line and "semanas" in line), ""
+    )
+
+
+async def test_summary_projects_each_item_at_bmws_weekly_average(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    """1900 km at 570 km/week is 3.3 weeks from the 13 Sep reading: 7 Oct 2026."""
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "570 km/semana" in text
+    line = _forecast_line(text, "Frenos delanteros")
+    assert "3,3 semanas" in line
+    assert "07-10-2026" in line
+
+
+async def test_summary_says_the_oil_is_due_by_distance_before_its_date(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    """14000 km at 570 km/week lands in March 2027, before the 2027-07 date."""
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "antes por km" in _forecast_line(text, "Aceite de motor")
+
+
+async def test_summary_admits_the_local_history_cannot_measure_the_pace_yet(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "historico local" in text
+
+
+# --- Tyre trend per axle ---------------------------------------------------
+
+
+def _seed_tyres(adapter, moment, stamp, pressures, targets):
+    """Record one reading event of the eight tyre descriptors."""
+    from pitwall_mcp.descriptors import WHEEL_POSITIONS, tyre_descriptor
+
+    entries = {}
+    for (row, side, _), pressure, target in zip(WHEEL_POSITIONS, pressures, targets, strict=True):
+        entries[tyre_descriptor(row, side, "pressure")] = {
+            "value": str(pressure), "unit": "kPa", "timestamp": stamp,
+        }
+        entries[tyre_descriptor(row, side, "pressureTarget")] = {
+            "value": str(target), "unit": "kPa", "timestamp": stamp,
+        }
+    adapter.history.record(FAKE_VIN, entries, moment=moment)
+
+
+async def test_summary_says_when_there_are_not_enough_readings_for_a_trend(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "Tendencia por eje" in text
+    assert "lecturas suficientes" in text
+
+
+async def test_summary_reads_a_steady_rear_gap_as_no_leak(
+    brake_adapter, ready_settings, catalogue_obj
+):
+    """Rear left 10 kPa below its partner in all three readings: steady, not a leak."""
+    for day in (10, 12):
+        _seed_tyres(
+            brake_adapter,
+            datetime(2026, 9, day, 12, tzinfo=UTC),
+            f"2026-09-{day}T12:00:00.000Z",
+            (250, 250, 240, 250),
+            (260, 260, 260, 260),
+        )
+
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    rear = next((line for line in text.splitlines() if "Eje trasero" in line), "")
+    assert "sin indicio de fuga lenta" in rear
+    assert "de 10 a 10 kPa" in rear

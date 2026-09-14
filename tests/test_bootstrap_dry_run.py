@@ -48,15 +48,16 @@ def test_dry_run_prints_the_exact_payload(capsys, monkeypatch, settings):
     assert "POST https://api-cardata.bmwgroup.com/customers/containers" in output
     assert "x-version: v1" in output
     assert f'"name": "{D.CONTAINER_NAME}"' in output
-    for descriptor in D.CONTAINER_DESCRIPTORS:
+    for descriptor in (*D.CONTAINER_DESCRIPTORS, *D.TRIAL_DESCRIPTORS):
         assert descriptor in output
 
 
-def test_the_request_carries_the_32_container_descriptors():
-    """The payload is built from the confirmed list, not from anything else."""
+def test_the_request_carries_the_confirmed_and_the_trial_descriptors():
+    """32 confirmed plus 10 on trial, in that order, and nothing else."""
     request = bootstrap.build_request()
     assert request.name == D.CONTAINER_NAME
-    assert len(request.technical_descriptors) == 32
+    assert request.technical_descriptors == [*D.CONTAINER_DESCRIPTORS, *D.TRIAL_DESCRIPTORS]
+    assert len(request.technical_descriptors) == 42
     assert D.TYRE_DIAGNOSIS not in request.technical_descriptors
 
 
@@ -64,7 +65,19 @@ def test_the_diagnosis_descriptor_can_be_added_on_purpose():
     """The flag exists so the swagger's warning can be tested empirically."""
     request = bootstrap.build_request(include_diagnosis=True)
     assert D.TYRE_DIAGNOSIS in request.technical_descriptors
-    assert len(request.technical_descriptors) == 33
+    assert len(request.technical_descriptors) == 43
+
+
+def test_dry_run_says_the_current_container_keeps_working(capsys, monkeypatch, settings):
+    """Creating the new container changes nothing until its id goes into .env."""
+    monkeypatch.setattr(bootstrap, "load_settings", lambda: settings)
+    import asyncio
+
+    asyncio.run(bootstrap.main([]))
+    output = capsys.readouterr().out
+    assert "en prueba" in output
+    assert "PITWALL_CONTAINER_ID" in output
+    assert "--delete" in output
 
 
 def test_every_descriptor_is_verified_against_the_catalogue(settings):

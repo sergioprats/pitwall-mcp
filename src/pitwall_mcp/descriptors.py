@@ -130,6 +130,42 @@ CONTAINER_DESCRIPTORS: Final[tuple[str, ...]] = (
 #: container. Used by tests and documentation, not to build requests.
 ALL_CONFIRMED_DESCRIPTORS: Final[tuple[str, ...]] = (*CONTAINER_DESCRIPTORS, TYRE_DIAGNOSIS)
 
+# --- On trial: in the catalogue, never yet seen from this car --------------
+# Added on 2026-09-14 because they give what the official app does not show:
+# real consumption, the fuel tank, the fault memory and engine temperature.
+# All ten exist in the catalogue; whether this U11 emits any of them is only
+# known after the first read of the extended container. Until then no tool
+# relies on them, and a response without them is not reported as missing.
+FUEL_LEVEL: Final = "vehicle.drivetrain.fuelSystem.level"
+FUEL_REMAINING: Final = "vehicle.drivetrain.fuelSystem.remainingFuel"
+REMAINING_RANGE: Final = "vehicle.cabin.infotainment.navigation.remainingRange"
+LAST_REMAINING_RANGE: Final = "vehicle.drivetrain.lastRemainingRange"
+OBFCM_FUEL: Final = "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel"
+OBFCM_DISTANCE: Final = (
+    "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance"
+)
+FAULT_MEMORY: Final = "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw"
+COOLANT_TEMPERATURE: Final = "vehicle.drivetrain.internalCombustionEngine.engine.ect"
+# Not streamable, like the tyre diagnosis: it may be bound to an endpoint of its
+# own and never come back through /telematicData. The trial will tell.
+LIVE_DIAGNOSTICS: Final = "vehicle.serviceDemand.defect.id"
+# isIgnitionOn arrives empty on this car. If isMoving does not, it is the only
+# way to tell a charging voltage from a resting one.
+IS_MOVING: Final = "vehicle.isMoving"
+
+TRIAL_DESCRIPTORS: Final[tuple[str, ...]] = (
+    FUEL_LEVEL,
+    FUEL_REMAINING,
+    REMAINING_RANGE,
+    LAST_REMAINING_RANGE,
+    OBFCM_FUEL,
+    OBFCM_DISTANCE,
+    FAULT_MEMORY,
+    COOLANT_TEMPERATURE,
+    LIVE_DIAGNOSTICS,
+    IS_MOVING,
+)
+
 # --- Values that are NOT numbers -------------------------------------------
 #: BMW's explicit "no measurement". Must never be read as zero.
 NO_MEASUREMENT: Final = "-NA-"

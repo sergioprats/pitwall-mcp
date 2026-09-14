@@ -88,6 +88,19 @@ con etiquetas y ceros de relleno que no son medidas.
 estar en `OK`. La cifra global de próximo servicio no basta: con los frenos
 delanteros en `PENDING` a 1.900 km, marcaba 13.560.
 
+`get_maintenance_summary()` añade dos cosas que la app oficial no da, sin gastar
+peticiones:
+
+- **Previsión.** La app dice "1.600 km". El resumen dice cuándo: unas 2,8
+  semanas, hacia el 4 de octubre, al ritmo al que de verdad se usa el coche.
+  Toma la media semanal de BMW o la del histórico local, la mayor de las dos, y
+  avisa si una partida vence antes por km que por fecha.
+- **Tendencia de neumáticos por eje.** Compara cada rueda con su pareja de eje
+  en la misma lectura, que comparte temperatura y carga. Solo avisa de posible
+  fuga lenta si la diferencia crece. Comparar con el objetivo a secas
+  confundiría el calor del neumático con una fuga, porque el objetivo sube con
+  la temperatura.
+
 `diagnose_software_update()` razona sobre la **serie** del histórico, no sobre
 una foto. De las tres condiciones que BMW documenta para no ofrecer una
 actualización, CarData sólo permite observar una, y la herramienta declara las
@@ -191,6 +204,11 @@ quedan menos de 3; si caduca, hay que repetir este paso a mano.
 
 Copia el `containerId` resultante a `PITWALL_CONTAINER_ID` en el `.env`. El
 servidor MCP solo consume ese id: nunca crea ni borra nada.
+
+El contenedor pide 42 descriptores. 10 de ellos están **en prueba**: consumo
+real, depósito, memoria de averías y temperatura del motor. Existen en el
+catálogo, pero no se sabe si tu coche los emite. `get_telematic_data()` los
+enseña aparte cuando llegan, y ninguna otra herramienta depende de ellos.
 
 ### 4. Arrancar
 

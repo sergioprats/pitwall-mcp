@@ -6,6 +6,7 @@ from ..cardata.client import CarDataAdapter
 from ..catalogue import Catalogue
 from ..config import Settings
 from ..descriptors import (
+    AVG_WEEKLY_DISTANCE_SHORT,
     BATTERY_SERVICE_RECHARGE,
     BATTERY_SERVICE_REPLACE,
     BATTERY_STATE_OF_CHARGE,
@@ -17,9 +18,12 @@ from ..descriptors import (
     SERVICE_DISTANCE_NEXT,
     SERVICE_DISTANCE_YELLOW,
     TRAVELLED_DISTANCE,
+    TYRE_PRESSURE_DESCRIPTORS,
+    TYRE_PRESSURE_TARGET_DESCRIPTORS,
     WHEEL_POSITIONS,
     tyre_descriptor,
 )
+from ..forecast import MIN_HISTORY_DAYS, project, rate_from_history
 from ..formatting import (
     build_pressure,
     format_battery_recharge,
@@ -28,8 +32,10 @@ from ..formatting import (
     format_tristate,
     parse_numeric,
 )
+from ..storage.db import utc_now
 from ..storage.history import Reading
-from ..telematic import TelematicSnapshot, parse_cbs
+from ..telematic import CbsBlock, TelematicSnapshot, parse_cbs
+from ..tyre_trend import MIN_EVENTS, AxleTrend, axle_trends
 from .readiness import require_ready
 from .telematic_tools import render_cbs, render_check_control, render_urgent_cbs
 
@@ -73,6 +79,13 @@ async def get_maintenance_summary(
 
     lines.append("")
     lines.extend(render_cbs(cbs))
+    if cbs is not None:
+        lines.append("")
+        lines.extend(
+            _render_forecast(
+                snapshot, cbs, adapter.history.changes(settings.vin, TRAVELLED_DISTANCE)
+            )
+        )
     lines.append("")
     lines.extend(render_check_control(snapshot))
 
@@ -87,6 +100,16 @@ async def get_maintenance_summary(
             target.value if target.has_value else None,
         )
         lines.append(f"  {reading.describe()}")
+    lines.extend(
+        _render_tyre_trend(
+            axle_trends(
+                adapter.history.snapshots(
+                    settings.vin,
+                    (*TYRE_PRESSURE_DESCRIPTORS, *TYRE_PRESSURE_TARGET_DESCRIPTORS),
+                )
+            )
+        )
+    )
 
     lines.append("")
     lines.append("Bateria de 12V:")
@@ -106,6 +129,103 @@ async def get_maintenance_summary(
     lines.append(f"Dato mas antiguo utilizado: {format_moment(snapshot.oldest_moment())}.")
     lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))
     return "\n".join(lines)
+
+
+def _km(value: float) -> str:
+    """Kilometres with a Spanish thousands separator."""
+    return f"{value:,.0f}".replace(",", ".")
+
+
+def _render_forecast(
+    snapshot: TelematicSnapshot, cbs: CbsBlock, mileage: list[Reading]
+) -> list[str]:
+    """When each CBS item falls due at the pace the car is really driven.
+
+    Arithmetic on BMW's figures, not a new datum, and said so. Two paces may be
+    available; the faster one is used so the estimate never arrives late.
+    """
+    lines = ["Prevision orientativa (calculo propio sobre los km de BMW, no un dato de BMW):"]
+    bmw = snapshot.get(AVG_WEEKLY_DISTANCE_SHORT).as_float()
+    local = rate_from_history(mileage)
+
+    paces: list[tuple[float, str]] = []
+    if bmw:
+        paces.append((bmw, "media semanal que da BMW"))
+    if local is not None:
+        paces.append((local.km_per_week, f"tu historico local, {local.days:.0f} dias"))
+    if local is None:
+        lines.append(
+            f"  El historico local aun no permite medir tu ritmo: hacen falta lecturas de "
+            f"kilometraje separadas al menos {MIN_HISTORY_DAYS:.0f} dias."
+        )
+    if not paces:
+        lines.append("  Sin un ritmo de uso con el que calcular, no hay prevision.")
+        return lines
+
+    pace, source = max(paces)
+    header = f"  Ritmo usado: {_km(pace)} km/semana ({source})"
+    if len(paces) == 2:
+        other, other_source = min(paces)
+        header += f"; {other_source}: {_km(other)}. Se usa el mayor para no quedarse corto"
+    lines.append(header + ".")
+
+    reference = snapshot.get(TRAVELLED_DISTANCE).moment or utc_now()
+    items = sorted(
+        (item for item in cbs.items if item.distance_km is not None),
+        key=lambda item: item.distance_km or 0,
+    )
+    for item in items:
+        projection = project(item.distance_km, item.date_text, pace, reference)
+        if projection.weeks is None or projection.due_date is None:
+            continue
+        weeks = f"{projection.weeks:.1f}".replace(".", ",")
+        line = (
+            f"  - {item.label}: {_km(item.distance_km or 0)} km, unas {weeks} semanas, "
+            f"hacia el {projection.due_date:%d-%m-%Y}"
+        )
+        if item.date_text:
+            if projection.first == "km":
+                line += f"; vence antes por km que por fecha ({item.date_text})"
+            else:
+                line += f"; vence antes por fecha ({item.date_text}) que por km"
+        lines.append(line + ".")
+    return lines
+
+
+def _render_tyre_trend(trends: list[AxleTrend] | None) -> list[str]:
+    """Each axle's left-right gap over the history, and whether it is growing."""
+    if trends is None:
+        return [
+            f"  Tendencia por eje: aun no hay lecturas suficientes (hacen falta "
+            f"{MIN_EVENTS}, separadas al menos un dia)."
+        ]
+    lines = [
+        f"  Tendencia por eje ({trends[0].events} lecturas): cada rueda se compara con su "
+        f"pareja de eje en la misma lectura, que comparte temperatura y carga. El "
+        f"sensor mide en pasos de 10 kPa."
+    ]
+    for trend in trends:
+        first, last = abs(trend.first_gap), abs(trend.last_gap)
+        if trend.flagged:
+            lines.append(
+                f"    OJO, eje {trend.axle}: la rueda {trend.lower_side} pierde presion "
+                f"respecto a su pareja (de {first} a {last} kPa). Posible fuga lenta: "
+                f"compruebala con un manometro."
+            )
+        elif trend.first_gap == trend.last_gap == 0:
+            lines.append(f"    Eje {trend.axle}: sin diferencia entre ruedas.")
+        elif trend.last_gap == 0:
+            lines.append(
+                f"    Eje {trend.axle}: hoy sin diferencia entre ruedas (en la primera "
+                f"lectura habia {first} kPa); sin indicio de fuga lenta."
+            )
+        else:
+            lines.append(
+                f"    Eje {trend.axle}: la rueda {trend.lower_side} va por debajo de su "
+                f"pareja, de {first} a {last} kPa; la diferencia no crece, sin indicio "
+                f"de fuga lenta."
+            )
+    return lines
 
 
 # --- The software-update diagnosis -----------------------------------------

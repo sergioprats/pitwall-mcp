@@ -66,6 +66,31 @@ def test_pressures_are_kpa_and_admit_no_measurement(catalogue, descriptor):
     assert D.NO_MEASUREMENT in entry.value_range
 
 
+@pytest.mark.parametrize("descriptor", D.TRIAL_DESCRIPTORS)
+def test_every_trial_descriptor_exists(catalogue, descriptor):
+    """Trial descriptors obey rule 5 exactly like the confirmed ones."""
+    assert catalogue.get(descriptor) is not None, f"{descriptor} no esta en el catalogo"
+
+
+def test_trial_descriptors_are_new_and_not_electric(catalogue):
+    """Nothing asked twice, nothing a petrol car cannot have."""
+    assert not set(D.TRIAL_DESCRIPTORS) & set(D.CONTAINER_DESCRIPTORS)
+    assert [
+        d for d in D.TRIAL_DESCRIPTORS if catalogue.get(d).category == ELECTRIC_CATEGORY
+    ] == []
+
+
+def test_the_trial_group_asks_for_what_the_official_app_does_not_show():
+    """Real consumption, the fuel tank and the fault memory: the reason for the trial."""
+    for descriptor in (
+        "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel",
+        "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance",
+        "vehicle.drivetrain.fuelSystem.level",
+        "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw",
+    ):
+        assert descriptor in D.TRIAL_DESCRIPTORS
+
+
 def test_software_version_has_no_descriptor(catalogue):
     """Nothing in the catalogue exposes a vehicle software version."""
     suspects = [

@@ -180,7 +180,35 @@ async def get_telematic_data(
         lines.append(f"    {shown}{unit}   ({format_moment(entry.moment)})")
 
     lines.extend(render_states(snapshot, settings, catalogue))
+    lines.extend(render_trial(snapshot))
     return "\n".join(lines)
+
+
+def render_trial(snapshot: TelematicSnapshot) -> list[str]:
+    """Descriptors the response carried beyond the confirmed container.
+
+    They come from the extended container and are still on trial: shown as
+    they arrived, with their state, and used by no tool until verified.
+    """
+    extra = [d for d in snapshot.entries if d not in CONTAINER_DESCRIPTORS]
+    if not extra:
+        return []
+    lines = [
+        "",
+        f"EN PRUEBA ({len(extra)}): descriptores del contenedor ampliado. Se muestran "
+        f"tal cual llegan; ninguna herramienta los usa todavia.",
+    ]
+    for descriptor in extra:
+        entry = snapshot.get(descriptor)
+        lines.append(f"  {descriptor}")
+        if entry.state is ValueState.VALUE:
+            unit = f" {entry.unit}" if entry.unit else ""
+            lines.append(f"    {entry.value}{unit}   ({format_moment(entry.moment)})")
+        elif entry.state is ValueState.NO_MEASUREMENT:
+            lines.append("    sin medida (-NA-)")
+        else:
+            lines.append("    presente y vacio: el vehiculo conoce el campo y no da valor")
+    return lines
 
 
 async def get_vehicle_status(
