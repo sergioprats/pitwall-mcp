@@ -107,9 +107,9 @@ def test_the_telematic_report_names_what_did_not_arrive(capsys, settings):
     capture.report_telematic(load_fixture("telematic_partial.json"), settings)
     out = capsys.readouterr().out
 
-    assert "Descriptores pedidos    : 32" in out
+    assert "Descriptores pedidos    : 42" in out
     assert "Con valor               : 4" in out
-    assert "Ausentes de la respuesta: 28" in out
+    assert "Ausentes de la respuesta: 38" in out
     assert "vehicle.electricalSystem.battery.voltage" in out
     assert "no disponible para este" in out  # the rule 6 explanation
 
@@ -125,7 +125,8 @@ def test_an_empty_value_is_not_counted_as_data(capsys, settings):
 
     assert "Con valor               : 21" in out
     assert "Presentes pero VACIOS   : 11" in out
-    assert "Ausentes de la respuesta: 0" in out
+    # The 7 Sep answer came from the 32-key container: the ten added later are absent.
+    assert "Ausentes de la respuesta: 10" in out
     assert "PRESENTES PERO VACIOS" in out
     assert "vehicle.vehicle.deepSleepModeActive" in out
 

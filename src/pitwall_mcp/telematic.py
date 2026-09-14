@@ -146,13 +146,21 @@ class TelematicSnapshot:
         """Which of the descriptors we asked for are not in the response."""
         return [d for d in expected if d not in self.entries]
 
-    def moments(self) -> list[datetime]:
-        """Every BMW timestamp present, for "oldest datum used" reporting."""
-        return [entry.moment for entry in self.entries.values() if entry.moment is not None]
+    def moments(self, excluding: tuple[str, ...] = ()) -> list[datetime]:
+        """Every BMW timestamp present, minus the descriptors a caller never reads."""
+        return [
+            entry.moment
+            for descriptor, entry in self.entries.items()
+            if entry.moment is not None and descriptor not in excluding
+        ]
 
-    def oldest_moment(self) -> datetime | None:
-        """The oldest BMW timestamp in the snapshot."""
-        moments = self.moments()
+    def oldest_moment(self, excluding: tuple[str, ...] = ()) -> datetime | None:
+        """The oldest BMW timestamp, ignoring descriptors the caller never reads.
+
+        The OBFCM pair arrives stamped 30 Oct 2024: a tool that does not use it
+        must not report that date as the oldest datum it relied on.
+        """
+        moments = self.moments(excluding)
         return min(moments) if moments else None
 
     def newest_moment(self) -> datetime | None:

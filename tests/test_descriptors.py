@@ -32,8 +32,8 @@ def test_container_excludes_the_tyre_diagnosis_descriptor():
     """The diagnosis key has its own endpoint, so it stays out of the container."""
     assert D.TYRE_DIAGNOSIS not in D.CONTAINER_DESCRIPTORS
     assert D.TYRE_DIAGNOSIS in D.ALL_CONFIRMED_DESCRIPTORS
-    assert len(D.CONTAINER_DESCRIPTORS) == 32
-    assert len(D.ALL_CONFIRMED_DESCRIPTORS) == 33
+    assert len(D.CONTAINER_DESCRIPTORS) == 42
+    assert len(D.ALL_CONFIRMED_DESCRIPTORS) == 43
 
 
 def test_no_descriptor_is_repeated_in_the_container():
@@ -66,10 +66,9 @@ def test_pressures_are_kpa_and_admit_no_measurement(catalogue, descriptor):
     assert D.NO_MEASUREMENT in entry.value_range
 
 
-@pytest.mark.parametrize("descriptor", D.TRIAL_DESCRIPTORS)
-def test_every_trial_descriptor_exists(catalogue, descriptor):
+def test_every_trial_descriptor_exists(catalogue):
     """Trial descriptors obey rule 5 exactly like the confirmed ones."""
-    assert catalogue.get(descriptor) is not None, f"{descriptor} no esta en el catalogo"
+    assert [d for d in D.TRIAL_DESCRIPTORS if catalogue.get(d) is None] == []
 
 
 def test_trial_descriptors_are_new_and_not_electric(catalogue):
@@ -80,15 +79,15 @@ def test_trial_descriptors_are_new_and_not_electric(catalogue):
     ] == []
 
 
-def test_the_trial_group_asks_for_what_the_official_app_does_not_show():
-    """Real consumption, the fuel tank and the fault memory: the reason for the trial."""
+def test_the_container_asks_for_what_the_official_app_does_not_show():
+    """Promoted on 2026-09-14 after arriving in a real read of the extended container."""
     for descriptor in (
         "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel",
         "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance",
         "vehicle.drivetrain.fuelSystem.level",
         "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw",
     ):
-        assert descriptor in D.TRIAL_DESCRIPTORS
+        assert descriptor in D.CONTAINER_DESCRIPTORS
 
 
 def test_software_version_has_no_descriptor(catalogue):

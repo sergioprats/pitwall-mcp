@@ -17,6 +17,7 @@ from ..descriptors import (
     CBS_COUNT,
     CHECK_CONTROL_MESSAGES,
     CONTAINER_DESCRIPTORS,
+    FROZEN_LIFETIME_DESCRIPTORS,
     SERVICE_DISTANCE_NEXT,
     SERVICE_DISTANCE_YELLOW,
     TRAVELLED_DISTANCE,
@@ -258,6 +259,7 @@ async def get_vehicle_status(
 
     lines.append("")
     lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))
-    lines.append(f"Dato mas antiguo utilizado: {format_moment(snapshot.oldest_moment())}.")
+    oldest = snapshot.oldest_moment(excluding=FROZEN_LIFETIME_DESCRIPTORS)
+    lines.append(f"Dato mas antiguo utilizado: {format_moment(oldest)}.")
     lines.extend(render_states(snapshot, settings, catalogue))
     return "\n".join(lines)

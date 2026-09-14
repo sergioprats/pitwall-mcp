@@ -358,6 +358,22 @@ serie**, y ninguna herramienta puede presentarlo como consumo actual.
 
 `conditionBasedServices` siguió vacío también en esta lectura.
 
+**Promovidos el mismo 2026-09-14.** Los diez pasan al contenedor confirmado
+(`FUEL_DESCRIPTORS`, `DIAGNOSTIC_DESCRIPTORS` e `IS_MOVING` en el contexto), que
+queda en 42. Los tres vacíos se tratan como cualquier otro campo vacío.
+`TRIAL_DESCRIPTORS` queda vacío para futuras pruebas.
+
+Dos consecuencias que hubo que corregir en el código:
+
+- **El sello de 2024 del OBFCM se colaba como "dato más antiguo utilizado"** en
+  el estado, el resumen y el diagnóstico, que no usan ese dato.
+  `FROZEN_LIFETIME_DESCRIPTORS` lo excluye de esas tres. `get_telematic_data`
+  sí enseña el OBFCM, así que allí 2024 es el dato más antiguo de verdad.
+- **La unidad de la temperatura del refrigerante llega como `Â°C`**: es `°C` con
+  la codificación rota, UTF-8 leído como Latin-1. No se sabe si pasa en el
+  servidor de BMW o en la librería. Ninguna herramienta la muestra salvo
+  `get_telematic_data`, que enseña las unidades tal como llegan.
+
 ## Paso 0: lo que NO existe
 
 Verificado por búsqueda exhaustiva en el catálogo. Está prohibido
@@ -393,6 +409,8 @@ real.
 | `get_software_version(vin)` | — | **no implementable como tal** |
 | `report_product_update_step(vin)` | `/basicData` | implementada, pero **este vehículo no devuelve `puStep`**. Verificado el 2026-09-07. La herramienta explica la ausencia y sigue aclarando que `puStep` nunca fue la versión de software |
 | `diagnose_software_update(vin)` | compuesta, sobre histórico | confirmada, con veredicto acotado |
+| `get_fuel_status(vin)` | `/telematicData` + histórico | confirmada el 2026-09-14. Depósito y autonomía; repostajes detectados en el histórico (subida de 10 puntos o más); consumo desde el último repostaje solo a partir de 300 km, con su margen de +/-6 L en cada extremo. El OBFCM se muestra como cifra de por vida congelada, nunca como consumo actual |
+| `get_fault_memory(vin)` | `/telematicData` + histórico | confirmada el 2026-09-14. Códigos agrupados por centralita, la discrepancia de la cabecera y los códigos que aparecen o desaparecen entre lecturas. **No traduce ningún código** |
 
 ### `get_maintenance_summary(vin)`
 
@@ -601,6 +619,10 @@ Estado comprobado el 2026-09-13:
       qué ventajas aporta usar este MCP frente a la app o el portal. Sin
       prometer nada que el coche no emita: las ventajas se describen con los
       datos que de verdad llegan.
+- [ ] **Decidir si se anonimizan los códigos de avería de
+      `tests/fixtures/telematic_extended.json`** antes de hacer público el
+      repositorio. No llevan VIN ni ningún identificador, pero son la memoria de
+      averías real de este coche.
 - [ ] Commit de lo anterior.
 
 **2. Decisiones del usuario. Salen fuera o borran, y no se deshacen fácilmente:**

@@ -20,6 +20,8 @@ EXPECTED_TOOLS = {
     "get_tyre_diagnosis",
     "get_maintenance_summary",
     "diagnose_software_update",
+    "get_fuel_status",
+    "get_fault_memory",
 }
 
 

@@ -103,17 +103,65 @@ DEEP_SLEEP_MODE_ACTIVE: Final = "vehicle.vehicle.deepSleepModeActive"
 IGNITION_ON: Final = "vehicle.drivetrain.engine.isIgnitionOn"
 ENGINE_ACTIVE: Final = "vehicle.drivetrain.engine.isActive"
 
+# isIgnitionOn arrives empty on this car; isMoving was added hoping it would
+# tell a charging voltage from a resting one. It arrived empty too (2026-09-14).
+IS_MOVING: Final = "vehicle.isMoving"
+
 CONTEXT_DESCRIPTORS: Final[tuple[str, ...]] = (
     DEEP_SLEEP_MODE_ACTIVE,
     IGNITION_ON,
     ENGINE_ACTIVE,
+    IS_MOVING,
 )
+
+# --- Fuel ------------------------------------------------------------------
+# Added on 2026-09-14 and seen arriving that same day: what the official app
+# does not show. The litres come with a null unit and, per the catalogue, up to
+# 6 L of float error. The OBFCM pair arrives stamped 30 Oct 2024: a lifetime
+# figure refreshed at the workshop, not today's consumption.
+FUEL_LEVEL: Final = "vehicle.drivetrain.fuelSystem.level"
+FUEL_REMAINING: Final = "vehicle.drivetrain.fuelSystem.remainingFuel"
+REMAINING_RANGE: Final = "vehicle.cabin.infotainment.navigation.remainingRange"
+LAST_REMAINING_RANGE: Final = "vehicle.drivetrain.lastRemainingRange"
+OBFCM_FUEL: Final = "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel"
+OBFCM_DISTANCE: Final = (
+    "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance"
+)
+
+FUEL_DESCRIPTORS: Final[tuple[str, ...]] = (
+    FUEL_LEVEL,
+    FUEL_REMAINING,
+    REMAINING_RANGE,
+    LAST_REMAINING_RANGE,
+    OBFCM_FUEL,
+    OBFCM_DISTANCE,
+)
+
+# --- Diagnostics -----------------------------------------------------------
+# The fault memory arrives as XML inside the string: ECU address and code, no
+# status, no date, no description. The codes are the manufacturer's and are not
+# in the catalogue: they are counted and compared, never translated.
+FAULT_MEMORY: Final = "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw"
+COOLANT_TEMPERATURE: Final = "vehicle.drivetrain.internalCombustionEngine.engine.ect"
+# Not streamable and empty on the first read: possibly bound to an endpoint of
+# its own, like the tyre diagnosis.
+LIVE_DIAGNOSTICS: Final = "vehicle.serviceDemand.defect.id"
+
+DIAGNOSTIC_DESCRIPTORS: Final[tuple[str, ...]] = (
+    FAULT_MEMORY,
+    COOLANT_TEMPERATURE,
+    LIVE_DIAGNOSTICS,
+)
+
+#: Stamped 30 Oct 2024 and not used by the maintenance tools: kept out of their
+#: "oldest datum used", which would otherwise report a date they never read.
+FROZEN_LIFETIME_DESCRIPTORS: Final[tuple[str, ...]] = (OBFCM_FUEL, OBFCM_DISTANCE)
 
 # --- The container ---------------------------------------------------------
 CONTAINER_NAME: Final = "pitwall-maintenance"
 CONTAINER_PURPOSE: Final = (
-    "Read-only maintenance overview: mileage, CBS, 12V battery, tyre pressures "
-    "and sleep state."
+    "Read-only maintenance overview: mileage, CBS, 12V battery, tyre pressures, "
+    "sleep state, fuel and fault memory."
 )
 
 #: Everything a single /telematicData call must bring back. One fat container,
@@ -124,6 +172,8 @@ CONTAINER_DESCRIPTORS: Final[tuple[str, ...]] = (
     *TYRE_DESCRIPTORS,
     *BATTERY_DESCRIPTORS,
     *CONTEXT_DESCRIPTORS,
+    *FUEL_DESCRIPTORS,
+    *DIAGNOSTIC_DESCRIPTORS,
 )
 
 #: Every confirmed descriptor, including the ones that live outside the
@@ -131,40 +181,11 @@ CONTAINER_DESCRIPTORS: Final[tuple[str, ...]] = (
 ALL_CONFIRMED_DESCRIPTORS: Final[tuple[str, ...]] = (*CONTAINER_DESCRIPTORS, TYRE_DIAGNOSIS)
 
 # --- On trial: in the catalogue, never yet seen from this car --------------
-# Added on 2026-09-14 because they give what the official app does not show:
-# real consumption, the fuel tank, the fault memory and engine temperature.
-# All ten exist in the catalogue; whether this U11 emits any of them is only
-# known after the first read of the extended container. Until then no tool
-# relies on them, and a response without them is not reported as missing.
-FUEL_LEVEL: Final = "vehicle.drivetrain.fuelSystem.level"
-FUEL_REMAINING: Final = "vehicle.drivetrain.fuelSystem.remainingFuel"
-REMAINING_RANGE: Final = "vehicle.cabin.infotainment.navigation.remainingRange"
-LAST_REMAINING_RANGE: Final = "vehicle.drivetrain.lastRemainingRange"
-OBFCM_FUEL: Final = "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.fuel"
-OBFCM_DISTANCE: Final = (
-    "vehicle.drivetrain.fuelSystem.consumptionOverLifeTime.overall.referenceDistance"
-)
-FAULT_MEMORY: Final = "vehicle.electronicControlUnit.diagnosticTroubleCodes.raw"
-COOLANT_TEMPERATURE: Final = "vehicle.drivetrain.internalCombustionEngine.engine.ect"
-# Not streamable, like the tyre diagnosis: it may be bound to an endpoint of its
-# own and never come back through /telematicData. The trial will tell.
-LIVE_DIAGNOSTICS: Final = "vehicle.serviceDemand.defect.id"
-# isIgnitionOn arrives empty on this car. If isMoving does not, it is the only
-# way to tell a charging voltage from a resting one.
-IS_MOVING: Final = "vehicle.isMoving"
-
-TRIAL_DESCRIPTORS: Final[tuple[str, ...]] = (
-    FUEL_LEVEL,
-    FUEL_REMAINING,
-    REMAINING_RANGE,
-    LAST_REMAINING_RANGE,
-    OBFCM_FUEL,
-    OBFCM_DISTANCE,
-    FAULT_MEMORY,
-    COOLANT_TEMPERATURE,
-    LIVE_DIAGNOSTICS,
-    IS_MOVING,
-)
+# Asked for by the bootstrap script on top of the container, used by no tool,
+# and never reported as missing. A descriptor leaves the trial only after
+# arriving in a real read that is recorded as a fixture. The ten tried on
+# 2026-09-14 were promoted into the fuel, diagnostics and context groups above.
+TRIAL_DESCRIPTORS: Final[tuple[str, ...]] = ()
 
 # --- Values that are NOT numbers -------------------------------------------
 #: BMW's explicit "no measurement". Must never be read as zero.

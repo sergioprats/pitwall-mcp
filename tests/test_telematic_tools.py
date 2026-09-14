@@ -138,7 +138,7 @@ async def test_status_lists_what_came_back_empty(adapter, ready_settings, catalo
     """11 descriptors arrived without a value, and the user is told which."""
     text = await telematic_tools.get_vehicle_status(adapter, ready_settings, catalogue_obj)
 
-    assert "Sin lectura (11 de 32)" in text
+    assert "Sin lectura (11 de 42)" in text
     assert "vehicle.vehicle.deepSleepModeActive" in text
     assert "tampoco es un cero" in text
 
@@ -245,25 +245,15 @@ async def test_the_reading_reaches_the_local_history(adapter, ready_settings, ca
 # --- Trial descriptors -----------------------------------------------------
 
 
-async def test_the_old_container_does_not_report_trial_descriptors_as_missing(
-    brake_adapter, ready_settings, catalogue_obj
-):
-    """Until the new container is in .env, the ten trial keys are simply not asked
-    for. Calling them absent would read as "this car does not emit them"."""
-    text = await telematic_tools.get_telematic_data(brake_adapter, ready_settings, catalogue_obj)
-
-    assert "fuelSystem" not in text
-    assert "diagnosticTroubleCodes" not in text
-
-
-async def test_trial_descriptors_that_arrive_are_shown_apart(
+async def test_keys_beyond_the_container_are_shown_apart(
     ready_settings, db, fake_client, catalogue_obj
 ):
-    payload = load_fixture("telematic_brake_warning.json")
-    payload["telematicData"]["vehicle.drivetrain.fuelSystem.level"] = {
-        "value": "63",
-        "unit": "%",
-        "timestamp": "2026-09-13T18:13:49.000Z",
+    """A future trial: a catalogue key the confirmed container does not ask for."""
+    payload = load_fixture("telematic_extended.json")
+    payload["telematicData"]["vehicle.body.hood.isOpen"] = {
+        "value": "CLOSED",
+        "unit": None,
+        "timestamp": "2026-09-14T13:51:32.000Z",
     }
     fake_client.responses["get_telematic_data"] = payload
     adapter = CarDataAdapter(ready_settings, db=db, tokens=FakeTokens())
@@ -271,8 +261,9 @@ async def test_trial_descriptors_that_arrive_are_shown_apart(
     text = await telematic_tools.get_telematic_data(adapter, ready_settings, catalogue_obj)
 
     trial = text.split("EN PRUEBA")[-1] if "EN PRUEBA" in text else ""
-    assert "vehicle.drivetrain.fuelSystem.level" in trial
-    assert "63 %" in trial
+    assert "vehicle.body.hood.isOpen" in trial
+    assert "CLOSED" in trial
+    assert "fuelSystem" not in trial
 
 
 # --- Maintenance forecast --------------------------------------------------
@@ -369,3 +360,57 @@ async def test_summary_reads_a_steady_rear_gap_as_no_leak(
     rear = next((line for line in text.splitlines() if "Eje trasero" in line), "")
     assert "sin indicio de fuga lenta" in rear
     assert "de 10 a 10 kPa" in rear
+
+
+# --- Fuel and fault memory in the summary ----------------------------------
+
+
+@pytest.fixture
+def extended_adapter(ready_settings, db, fake_client):
+    """An adapter serving the first read of the 42-key container, 14 Sep 2026."""
+    fake_client.responses["get_telematic_data"] = load_fixture("telematic_extended.json")
+    return CarDataAdapter(ready_settings, db=db, tokens=FakeTokens())
+
+
+async def test_summary_carries_the_tank_and_the_fault_memory(
+    extended_adapter, ready_settings, catalogue_obj
+):
+    text = await diagnosis_tools.get_maintenance_summary(
+        extended_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "deposito al 58 %" in text
+    assert "44 codigos" in text
+    assert "get_fault_memory" in text
+
+
+async def test_the_frozen_obfcm_stamp_is_not_the_oldest_datum_of_the_tools(
+    extended_adapter, ready_settings, catalogue_obj
+):
+    """None of these tools uses the OBFCM pair, stamped 30 Oct 2024. Reporting
+    2024 as their oldest datum would claim a date they never read."""
+    from conftest import FakeCarDataClient
+
+    FakeCarDataClient.responses["get_basic_data"] = load_fixture("basic_data_real.json")
+    texts = [
+        await telematic_tools.get_vehicle_status(extended_adapter, ready_settings, catalogue_obj),
+        await diagnosis_tools.get_maintenance_summary(
+            extended_adapter, ready_settings, catalogue_obj
+        ),
+        await diagnosis_tools.diagnose_software_update(extended_adapter, ready_settings),
+    ]
+    for text in texts:
+        oldest = next(
+            (line for line in text.splitlines() if line.startswith("Dato mas antiguo")), ""
+        )
+        assert oldest
+        assert "2024" not in oldest
+
+
+async def test_summary_without_fuel_keys_says_so(brake_adapter, ready_settings, catalogue_obj):
+    """The 13 Sep answer predates the extended container."""
+    text = await diagnosis_tools.get_maintenance_summary(
+        brake_adapter, ready_settings, catalogue_obj
+    )
+
+    assert "Combustible: sin lectura" in text

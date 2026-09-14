@@ -13,8 +13,13 @@ from ..descriptors import (
     BATTERY_VOLTAGE,
     CBS_COUNT,
     DEEP_SLEEP_MODE_ACTIVE,
+    FAULT_MEMORY,
+    FROZEN_LIFETIME_DESCRIPTORS,
+    FUEL_LEVEL,
+    FUEL_REMAINING,
     IGNITION_ON,
     INSPECTION_DATE_LEGAL,
+    LAST_REMAINING_RANGE,
     SERVICE_DISTANCE_NEXT,
     SERVICE_DISTANCE_YELLOW,
     TRAVELLED_DISTANCE,
@@ -23,6 +28,7 @@ from ..descriptors import (
     WHEEL_POSITIONS,
     tyre_descriptor,
 )
+from ..fault_memory import parse_fault_memory
 from ..forecast import MIN_HISTORY_DAYS, project, rate_from_history
 from ..formatting import (
     build_pressure,
@@ -126,7 +132,11 @@ async def get_maintenance_summary(
     )
 
     lines.append("")
-    lines.append(f"Dato mas antiguo utilizado: {format_moment(snapshot.oldest_moment())}.")
+    lines.extend(_render_fuel_and_faults(snapshot))
+
+    lines.append("")
+    oldest = snapshot.oldest_moment(excluding=FROZEN_LIFETIME_DESCRIPTORS)
+    lines.append(f"Dato mas antiguo utilizado: {format_moment(oldest)}.")
     lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))
     return "\n".join(lines)
 
@@ -134,6 +144,33 @@ async def get_maintenance_summary(
 def _km(value: float) -> str:
     """Kilometres with a Spanish thousands separator."""
     return f"{value:,.0f}".replace(",", ".")
+
+
+def _render_fuel_and_faults(snapshot: TelematicSnapshot) -> list[str]:
+    """One line each for the tank and the fault memory; the detail has its own tools."""
+    level = snapshot.get(FUEL_LEVEL)
+    if level.has_value:
+        litres = snapshot.get(FUEL_REMAINING)
+        reach = snapshot.get(LAST_REMAINING_RANGE)
+        fuel = f"Combustible: deposito al {level.value} %"
+        if litres.has_value:
+            fuel += f" (unos {litres.value} L, +/-6 L)"
+        if reach.has_value:
+            fuel += f", autonomia {reach.value} km"
+        lines = [fuel + ". Detalle en get_fuel_status."]
+    else:
+        lines = ["Combustible: sin lectura en esta respuesta."]
+
+    faults = snapshot.get(FAULT_MEMORY)
+    memory = parse_fault_memory(str(faults.value)) if faults.has_value else None
+    if memory is not None:
+        lines.append(
+            f"Memoria de averias: {len(memory.codes)} codigos en {len(memory.by_ecu())} "
+            f"centralitas; detalle y cambios entre lecturas en get_fault_memory."
+        )
+    else:
+        lines.append("Memoria de averias: sin lectura en esta respuesta.")
+    return lines
 
 
 def _render_forecast(
@@ -468,6 +505,7 @@ async def diagnose_software_update(adapter: CarDataAdapter, settings: Settings) 
 
     lines.append("")
     lines.append(f"Dato mas reciente utilizado: {format_moment(snapshot.newest_moment())}.")
-    lines.append(f"Dato mas antiguo utilizado: {format_moment(snapshot.oldest_moment())}.")
+    oldest = snapshot.oldest_moment(excluding=FROZEN_LIFETIME_DESCRIPTORS)
+    lines.append(f"Dato mas antiguo utilizado: {format_moment(oldest)}.")
     lines.append(result.provenance(source_timestamp=snapshot.newest_moment()))
     return "\n".join(lines)

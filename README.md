@@ -77,6 +77,8 @@ Consulta `get_api_quota` antes de encadenar llamadas.
 | `get_tyre_diagnosis()` | sí (1/semana con caché) | funciona, pero este vehículo **devuelve la estructura vacía** |
 | `get_maintenance_summary()` | sí (compuesta) | **funciona** |
 | `diagnose_software_update()` | sí (compuesta, comparte caché) | **funciona**, con veredicto acotado |
+| `get_fuel_status()` | sí (comparte caché) | **funciona** |
+| `get_fault_memory()` | sí (comparte caché) | **funciona**; no traduce los códigos |
 
 Las dos herramientas marcadas con una reserva **funcionan y declaran la
 ausencia**: no rellenan el hueco con ceros ni con un valor plausible. `puStep`
@@ -100,6 +102,19 @@ peticiones:
   fuga lenta si la diferencia crece. Comparar con el objetivo a secas
   confundiría el calor del neumático con una fuga, porque el objetivo sube con
   la temperatura.
+
+Dos herramientas más con datos que la app oficial no enseña:
+
+- **`get_fuel_status()`**: depósito y autonomía, los repostajes que detecta en
+  el histórico y el consumo real desde el último. Solo da el consumo a partir de
+  300 km, y siempre con su margen, porque el aforador puede desviarse hasta 6 L.
+  Muestra también el consumo homologado (OBFCM), pero como lo que es: una cifra
+  de por vida que en este coche no se mueve desde octubre de 2024, no el consumo
+  de hoy.
+- **`get_fault_memory()`**: la memoria de averías que el coche guarda para el
+  taller, agrupada por centralita, y **qué códigos aparecen o desaparecen entre
+  lecturas**. No traduce ningún código: su significado no está en el catálogo
+  de BMW, y darlo sería inventarlo.
 
 `diagnose_software_update()` razona sobre la **serie** del histórico, no sobre
 una foto. De las tres condiciones que BMW documenta para no ofrecer una
@@ -205,10 +220,10 @@ quedan menos de 3; si caduca, hay que repetir este paso a mano.
 Copia el `containerId` resultante a `PITWALL_CONTAINER_ID` en el `.env`. El
 servidor MCP solo consume ese id: nunca crea ni borra nada.
 
-El contenedor pide 42 descriptores. 10 de ellos están **en prueba**: consumo
-real, depósito, memoria de averías y temperatura del motor. Existen en el
-catálogo, pero no se sabe si tu coche los emite. `get_telematic_data()` los
-enseña aparte cuando llegan, y ninguna otra herramienta depende de ellos.
+El contenedor pide 42 descriptores. Además del mantenimiento, incluye el
+depósito, la autonomía, el consumo homologado, la memoria de averías y la
+temperatura del motor. En el coche de referencia llegan todos menos tres. Si tu
+contenedor es de antes de esta ampliación, créalo de nuevo con el mismo script.
 
 ### 4. Arrancar
 

@@ -23,6 +23,8 @@ from ..cardata.errors import PitwallError
 from . import (
     catalogue_tools,
     diagnosis_tools,
+    fault_tools,
+    fuel_tools,
     quota_tools,
     telematic_tools,
     tyre_tools,
@@ -229,6 +231,38 @@ def register_tools(server: MCPServer, context: ToolContext) -> MCPServer:
         return await _guard_async(
             diagnosis_tools.diagnose_software_update(context.adapter, context.settings)
         )
+
+    @server.tool(
+        name="get_fuel_status",
+        title="Combustible: deposito, repostajes y consumo",
+        description=(
+            "Deposito en % y litros (+/-6 L segun el catalogo), autonomia, repostajes "
+            "detectados en el historico local y consumo real desde el ultimo, con su "
+            "margen de error. Incluye el consumo homologado OBFCM, marcado como lo que "
+            "es: una cifra de por vida congelada desde la ultima visita al taller, no el "
+            "consumo actual. Comparte la cache del contenedor (12 h)."
+        ),
+        annotations=READ_ONLY,
+    )
+    async def get_fuel_status() -> str:
+        """Return tank, range, refuels and consumption."""
+        return await _guard_async(fuel_tools.get_fuel_status(context.adapter, context.settings))
+
+    @server.tool(
+        name="get_fault_memory",
+        title="Memoria de averias",
+        description=(
+            "Codigos de la memoria de averias del coche, agrupados por centralita, y "
+            "que codigos han aparecido o desaparecido desde la lectura anterior. Cada "
+            "codigo solo trae centralita y codigo: sin estado, fecha ni descripcion, y "
+            "NO se traduce porque el catalogo no dice que significa. Comparte la cache "
+            "del contenedor (12 h)."
+        ),
+        annotations=READ_ONLY,
+    )
+    async def get_fault_memory() -> str:
+        """Return the fault memory and its changes between readings."""
+        return await _guard_async(fault_tools.get_fault_memory(context.adapter, context.settings))
 
     _LOGGER.info("Registered pitwall-mcp tools (all read-only)")
     return server

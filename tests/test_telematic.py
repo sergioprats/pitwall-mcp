@@ -75,7 +75,16 @@ def test_the_real_answer_has_all_keys_but_not_all_values():
     assert len(snapshot.entries) == 32
     assert len([d for d in CONTAINER_DESCRIPTORS if snapshot.get(d).has_value]) == 21
     assert len(snapshot.with_state(ValueState.EMPTY)) == 11
-    assert snapshot.missing_from(CONTAINER_DESCRIPTORS) == []
+
+    # Recorded from the 32-key container of 7 Sep: the ten promoted on 14 Sep
+    # were simply not asked for then.
+    from pitwall_mcp.descriptors import DIAGNOSTIC_DESCRIPTORS, FUEL_DESCRIPTORS, IS_MOVING
+
+    assert set(snapshot.missing_from(CONTAINER_DESCRIPTORS)) == {
+        *FUEL_DESCRIPTORS,
+        *DIAGNOSTIC_DESCRIPTORS,
+        IS_MOVING,
+    }
 
 
 def test_an_empty_value_is_its_own_state():

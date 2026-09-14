@@ -83,9 +83,9 @@ def print_dry_run(request: CreateContainerRequest, unknown: list[str]) -> int:
     print()
     print(f"Total de descriptores: {len(request.technical_descriptors)}")
     print(
-        f"De ellos, {len(TRIAL_DESCRIPTORS)} estan en prueba (combustible, consumo, memoria "
-        f"de averias...): existen en el catalogo, pero no se sabe si este coche los "
-        f"emite. Ninguna herramienta depende de ellos hasta verlos llegar."
+        f"Descriptores en prueba: {len(TRIAL_DESCRIPTORS)}. Uno en prueba existe en el "
+        f"catalogo pero aun no se ha visto llegar de este coche; ninguna herramienta "
+        f"depende de el."
     )
     print(
         "El contenedor actual sigue funcionando: nada cambia hasta que copies el id "

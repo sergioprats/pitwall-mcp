@@ -53,7 +53,7 @@ def test_dry_run_prints_the_exact_payload(capsys, monkeypatch, settings):
 
 
 def test_the_request_carries_the_confirmed_and_the_trial_descriptors():
-    """32 confirmed plus 10 on trial, in that order, and nothing else."""
+    """The 42 confirmed, then whatever is on trial (nothing since 2026-09-14)."""
     request = bootstrap.build_request()
     assert request.name == D.CONTAINER_NAME
     assert request.technical_descriptors == [*D.CONTAINER_DESCRIPTORS, *D.TRIAL_DESCRIPTORS]
