@@ -143,6 +143,14 @@ Partidas observadas en este U11: `Front Brake` (id 2), `Statutory vehicle
 inspection` (id 32), `Engine oil` (id 1), `Brake fluid` (id 3), `Vehicle check`
 (id 100).
 
+**La API recorta la fecha al mes. Verificado el 2026-09-13 contra la pantalla del
+coche:** el iDrive muestra "Aceite del motor 11.07.2027, en 14000 km" y la API da
+`"date": "2027-07"`. El día existe en el coche pero CarData no lo manda; las
+herramientas no pueden dar más precisión que el mes. Kilómetros y estado sí
+coinciden con la pantalla ("Pastillas freno del. en 1900 km", ITV 17.01.2027), y
+el Check Control del coche ("Es preciso sustituir las pastillas de freno") es el
+mismo aviso que la API da en inglés.
+
 **Discrepancia sin explicar:** `conditionBasedServicesCount` devolvió **9**
 mientras el array traía **5** partidas. Se desconoce el motivo. Las herramientas
 dan los dos números y **no fingen que cuadran**. El 2026-09-13 seguía igual: 9
@@ -198,6 +206,12 @@ siempre de la misma respuesta que la presión.
 
 El 2026-09-13 volvió a moverse: **280 kPa delante y 270 detrás** (antes 260 y
 250), con presiones de 270/270/250/260. No se sabe qué lo mueve.
+
+**2026-09-14, al terminar un tramo de 272 km:** presiones 290/290/270/270 y
+objetivo 290/290/280/280. El objetivo subió a la vez que las presiones, que
+suben con el neumático caliente. **Es compatible con un objetivo compensado por
+temperatura**, pero no está demostrado: las cuatro `tire.temperature` siguen
+llegando vacías, incluso tras horas de autovía.
 
 ### Tercer estado: presente y vacío
 
@@ -441,6 +455,59 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
   `scripts/refresh_catalogue.py` reutiliza ese mismo descargador: una sola URL
   y una sola definición de qué es un catálogo válido.
 
+### Pendiente para cerrar la publicación
+
+Estado comprobado el 2026-09-13:
+
+- El repositorio de GitHub `sergioprats/pitwall-mcp` es **privado**.
+- **El historial está limpio.** Ni el VIN, ni el client id, ni el
+  `containerId`, ni el gcid reales aparecen en `git log -p` de `main` ni de la
+  rama de backup. Los VIN que salen son todos de prueba: `...FAKE01`,
+  `...FAKE02`, `WBAOTROVIN1234567`, `WBA11223344556677`.
+- **El wheel está limpio**: 34 ficheros, `schema.sql` incluido, ningún documento
+  de BMW.
+- **El nombre `pitwall-mcp` está libre en PyPI** (404 en la API JSON).
+
+**1. Retoques locales, sin riesgo:**
+
+- [ ] La sección "Estado" del README está desfasada. Aún da por abierto si los
+      11 vacíos se rellenan con el contacto dado: se cerró el 2026-09-08, y
+      desde el 2026-09-13 son 10. Debe decir también que la REST no da serie de
+      voltaje en reposo.
+- [ ] Añadir al README `mcp-name: io.github.sergioprats/pitwall-mcp`. Lo exige
+      el registro MCP para demostrar la propiedad de un paquete de PyPI.
+      **Verificar el formato exacto en la documentación del registro antes de
+      publicar.**
+- [ ] **Documentación final**, pedida por el usuario el 2026-09-14 para cuando el
+      proyecto esté listo: pasos para publicar, cómo instalarlo y usarlo, y
+      qué ventajas aporta usar este MCP frente a la app o el portal. Sin
+      prometer nada que el coche no emita: las ventajas se describen con los
+      datos que de verdad llegan.
+- [ ] Commit de lo anterior.
+
+**2. Decisiones del usuario. Salen fuera o borran, y no se deshacen fácilmente:**
+
+- [ ] **Borrar la rama local `backup-antes-de-purgar`**, o sacarla a un bundle
+      fuera del repo. Tiene 24 commits que no están en `main` y, por su nombre,
+      conserva el historial de antes de purgar `spec/*.json`. No tiene upstream,
+      pero un `git push --all` la subiría. **Nunca usar `--all` con este repo
+      mientras exista.**
+- [ ] Subir `main` y hacer público el repositorio.
+- [ ] Publicar la 0.1.0 en PyPI. Un número de versión publicado no se puede
+      reutilizar. Hace falta una cuenta de PyPI con token, o publicación
+      directa desde GitHub (trusted publishing).
+- [ ] Registrar en `registry.modelcontextprotocol.io` con `mcp-publisher`,
+      entrando con la cuenta de GitHub `sergioprats`. Validar `server.json`
+      contra el esquema vigente en ese momento.
+
+Orden recomendado: borrar la rama de backup, subir y hacer público, PyPI y, por
+último, el registro. Ese orden es obligatorio: el registro comprueba el paquete
+de PyPI, y PyPI enlaza al repositorio.
+
+**3. Abierto, pero no impide publicar:** la prueba de la noche parado (2
+peticiones), la discrepancia 9 contra 5 del contador CBS, el huso horario del
+reinicio de cuota y la Fase 2.
+
 ---
 
 ## Riesgos abiertos
@@ -538,6 +605,15 @@ Todo esto va a `docs/streaming-design.md`. Sin código.
     batería "debilitada", una conclusión que la evidencia no sostiene. Con las
     dos lecturas reales se queda en `SIN VEREDICTO` y explica por qué. La Fase 2
     sigue siendo la única vía conocida para una serie en reposo.
+
+    **2026-09-14, tras una noche parado y un tramo de 272 km:** el grupo volvió
+    a moverse, con sello `2026-09-14T10:06:28.763Z` y **14,77 V**, otra vez con el
+    motor en marcha. Son tres refrescos vistos y los tres con el alternador
+    cargando. Ninguno lleva sello nocturno, aunque como solo se ve el último
+    sello, un refresco de madrugada que después se sobrescribiera sería
+    invisible. En la misma lectura, el Check Control 907 llegó re-sellado (12:09)
+    sin cambiar nada: mismo texto y mismo kilometraje, 48.376. Un sello nuevo en
+    un aviso no significa un aviso nuevo.
 
 ---
 
