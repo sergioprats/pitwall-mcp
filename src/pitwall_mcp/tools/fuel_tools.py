@@ -7,6 +7,8 @@ as it is now, and only the series says when it went up.
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from ..cardata.client import CarDataAdapter
 from ..config import Settings
 from ..descriptors import (
@@ -60,7 +62,9 @@ def _tank(snapshot: TelematicSnapshot, settings: Settings) -> list[str]:
     litres = snapshot.get(FUEL_REMAINING)
     if litres.has_value:
         lines.append(
-            f"  unos {litres.value} L. El catalogo avisa de que puede desviarse hasta "
+            f"  unos {litres.value} L, medidos {format_moment(litres.moment)}: van en el "
+            f"grupo de datos que BMW refresca de tarde en tarde, asi que pueden ser mas "
+            f"antiguos que el porcentaje. El catalogo avisa de que puede desviarse hasta "
             f"+/-{FLOAT_TOLERANCE_L:.0f} L segun la posicion del flotador, y BMW no manda "
             f"la unidad: la de litros sale del catalogo."
         )
@@ -103,6 +107,18 @@ def _obfcm(snapshot: TelematicSnapshot, settings: Settings) -> list[str]:
     ]
 
 
+def _measured(
+    adapter: CarDataAdapter, settings: Settings, descriptor: str
+) -> list[tuple[datetime, float]]:
+    """(BMW moment, number) for every distinct measurement of one descriptor."""
+    return [
+        (moment, number)
+        for reading in adapter.history.series(settings.vin, descriptor)
+        if (moment := reading.source_moment) is not None
+        and (number := parse_numeric(reading.value)) is not None
+    ]
+
+
 def _history(adapter: CarDataAdapter, settings: Settings) -> list[str]:
     """Refuels and consumption, worked out from the local series."""
     snapshots = adapter.history.snapshots(
@@ -128,15 +144,25 @@ def _history(adapter: CarDataAdapter, settings: Settings) -> list[str]:
             f"({readings} lectura{'s' if readings != 1 else ''} de deposito)."
         )
 
-    consumption = consumption_since_refuel(snapshots)
+    # Litres are measurements only: one row per distinct BMW stamp. Snapshots
+    # would carry the slow group's stale litres next to a fresh mileage.
+    consumption = consumption_since_refuel(
+        _measured(adapter, settings, FUEL_REMAINING),
+        _measured(adapter, settings, TRAVELLED_DISTANCE),
+    )
     if consumption is None:
         lines.append(
-            f"Consumo real: aun no. Hacen falta dos lecturas de deposito separadas al "
-            f"menos {MIN_CONSUMPTION_KM:.0f} km sin repostar entre medias; con menos, "
-            f"el error del aforador pesa mas que la cifra."
+            f"Consumo real: aun no. Hacen falta dos medidas de litros de verdad (con "
+            f"sello propio, no el mismo valor reenviado) separadas al menos "
+            f"{MIN_CONSUMPTION_KM:.0f} km sin repostar entre medias; con menos, el error "
+            f"del aforador pesa mas que la cifra."
         )
     else:
-        origin = "el ultimo repostaje" if refuels else "la primera lectura de deposito"
+        origin = (
+            "el ultimo repostaje"
+            if consumption.after_refuel
+            else "la primera medida de litros del historico"
+        )
         lines.append(
             f"Consumo desde {origin}: {_decimal(consumption.l_per_100km)} l/100 km "
             f"+/-{_decimal(consumption.margin)} ({_decimal(consumption.litres, 0)} L en "

@@ -1,13 +1,21 @@
 """Fuel: refuels and consumption from the tank series.
 
-Verified 2026-09-14: `fuelSystem.level` (%) and `.remainingFuel` arrive fresh,
-the litres with a `null` unit. The catalogue warns the litres may be off by up
-to 6 L depending on the float, so a consumption worked out from them carries
-that error at both ends of the stretch. It is only given over a distance long
-enough for the error not to swamp the figure, and always with its margin.
+Verified 2026-09-14: `fuelSystem.level` (%) arrives fresh with the measurement
+cohort, but `.remainingFuel` (litres, unit sent as `null`) travels in the slow
+timestamp group: it keeps its stamp for hours while the mileage moves on.
 
-Works on `HistoryStore.snapshots()`, so each event is what one response
-carried: level, litres and mileage read together.
+So the two series are used differently:
+
+* Refuels are seen in the level, read from `HistoryStore.snapshots()`.
+* Consumption is worked out from litres MEASUREMENTS only, one per distinct BMW
+  stamp, each paired with the mileage nearest to it in time. A snapshot carries
+  the last known litres forward, and pairing that stale value with a fresh
+  mileage invents a consumption.
+
+The catalogue warns the litres may be off by up to 6 L depending on the float,
+so a consumption carries that error at both ends. It is only given over a
+distance long enough for the error not to swamp the figure, and always with
+its margin.
 """
 
 from __future__ import annotations
@@ -17,7 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
-from .descriptors import FUEL_LEVEL, FUEL_REMAINING, TRAVELLED_DISTANCE
+from .descriptors import FUEL_LEVEL
 from .formatting import parse_numeric
 
 #: A rise of this many tank points between readings is a refuel. Less is the
@@ -27,15 +35,19 @@ REFUEL_MIN_POINTS: Final = 10.0
 #: Catalogue: "the specified value may differ by up to 6 litres".
 FLOAT_TOLERANCE_L: Final = 6.0
 
+#: A rise of the litres larger than the float error at both ends: a refuel.
+REFUEL_MIN_LITRES: Final = 2 * FLOAT_TOLERANCE_L
+
 #: Below this, 12 L of error across the stretch outweighs the figure itself.
 MIN_CONSUMPTION_KM: Final = 300.0
 
 Snapshot = tuple[datetime, dict[str, str | None]]
+Point = tuple[datetime, float]
 
 
 @dataclass(frozen=True)
 class Refuel:
-    """A rise of the tank between two consecutive readings."""
+    """A rise of the tank level between two consecutive readings."""
 
     moment: datetime
     level_before: float
@@ -50,6 +62,7 @@ class Consumption:
     km: float
     since: datetime
     until: datetime
+    after_refuel: bool
 
     @property
     def l_per_100km(self) -> float:
@@ -62,50 +75,52 @@ class Consumption:
         return 2 * FLOAT_TOLERANCE_L / self.km * 100
 
 
-def _events(snapshots: Sequence[Snapshot]) -> list[tuple[datetime, float, float, float]]:
-    """(moment, level %, litres, km) for every event carrying all three numbers."""
-    events = []
-    for moment, values in snapshots:
-        level = parse_numeric(values.get(FUEL_LEVEL))
-        litres = parse_numeric(values.get(FUEL_REMAINING))
-        km = parse_numeric(values.get(TRAVELLED_DISTANCE))
-        if level is not None and litres is not None and km is not None:
-            events.append((moment, level, litres, km))
-    return events
-
-
-def _is_refuel(before: tuple, after: tuple) -> bool:
-    """Whether the tank rose enough between two events to be a refuel."""
-    return after[1] - before[1] >= REFUEL_MIN_POINTS
-
-
 def detect_refuels(snapshots: Sequence[Snapshot]) -> list[Refuel]:
-    """Every refuel visible in the series, dated by the reading that saw it."""
-    events = _events(snapshots)
+    """Every rise of the level visible in the series, dated by the reading that saw it."""
+    levels = [
+        (moment, level)
+        for moment, values in snapshots
+        if (level := parse_numeric(values.get(FUEL_LEVEL))) is not None
+    ]
     return [
         Refuel(moment=after[0], level_before=before[1], level_after=after[1])
-        for before, after in zip(events, events[1:], strict=False)
-        if _is_refuel(before, after)
+        for before, after in zip(levels, levels[1:], strict=False)
+        if after[1] - before[1] >= REFUEL_MIN_POINTS
     ]
 
 
-def consumption_since_refuel(snapshots: Sequence[Snapshot]) -> Consumption | None:
-    """Consumption from the last refuel (or the first reading) to the latest.
+def _nearest_km(moment: datetime, mileage: Sequence[Point]) -> float | None:
+    """The mileage measured nearest in time to `moment`."""
+    if not mileage:
+        return None
+    return min(mileage, key=lambda point: abs((point[0] - moment).total_seconds()))[1]
 
-    `None` when the stretch is shorter than `MIN_CONSUMPTION_KM` or the litres
-    did not go down: a negative consumption is a float or a slope, not a figure.
+
+def consumption_since_refuel(
+    litres: Sequence[Point], mileage: Sequence[Point]
+) -> Consumption | None:
+    """Consumption from the last refuel (or the first measurement) to the latest.
+
+    `litres` must hold measurements, one per distinct BMW stamp. `None` when
+    the stretch is shorter than `MIN_CONSUMPTION_KM`, when there is no mileage
+    to pair with, or when the litres did not go down.
     """
-    events = _events(snapshots)
+    points = sorted(litres, key=lambda point: point[0])
     start = 0
-    for index in range(1, len(events)):
-        if _is_refuel(events[index - 1], events[index]):
+    for index in range(1, len(points)):
+        if points[index][1] - points[index - 1][1] > REFUEL_MIN_LITRES:
             start = index
-    stretch = events[start:]
+    stretch = points[start:]
     if len(stretch) < 2:
         return None
-    first, last = stretch[0], stretch[-1]
-    km = last[3] - first[3]
-    litres = first[2] - last[2]
-    if km < MIN_CONSUMPTION_KM or litres <= 0:
+    (since, first_litres), (until, last_litres) = stretch[0], stretch[-1]
+    first_km, last_km = _nearest_km(since, mileage), _nearest_km(until, mileage)
+    if first_km is None or last_km is None:
         return None
-    return Consumption(litres=litres, km=km, since=first[0], until=last[0])
+    km = last_km - first_km
+    used = first_litres - last_litres
+    if km < MIN_CONSUMPTION_KM or used <= 0:
+        return None
+    return Consumption(
+        litres=used, km=km, since=since, until=until, after_refuel=start > 0
+    )

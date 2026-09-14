@@ -777,10 +777,15 @@ reinicio de cuota y la Fase 2.
       temperatura del refrigerante, `serviceDistance.next` y **los litros del
       depósito** conservan el sello de las 13:49. El nivel en % sí es fresco
       (19:56). Arrancar el motor no es el disparador.
-    - **Consecuencia para `get_fuel_status`, PENDIENTE DE CORREGIR:**
-      `remainingFuel` viaja en el grupo lento. El histórico arrastra los litros
-      rancios junto a kilómetros frescos, y el consumo entre repostajes puede
-      salir mal. Hay que calcular solo con litros cuyo propio sello haya cambiado.
+    - **Consecuencia para `get_fuel_status`, CORREGIDA el mismo día:**
+      `remainingFuel` viaja en el grupo lento, y las lecturas reconstruidas
+      arrastraban esos litros antiguos junto a kilómetros frescos. Un test
+      reproduce el caso y el código viejo se inventaba un consumo. Ahora el
+      consumo usa solo **medidas** de litros, una por sello distinto de BMW,
+      cada una emparejada con el kilometraje medido más cerca en el tiempo. Un
+      repostaje, a efectos de consumo, es una subida de más de 12 L (el error
+      del aforador en los dos extremos). La herramienta enseña además cuándo se
+      midieron los litros, que pueden ser más antiguos que el porcentaje.
     - CBS volvió a llegar con valor (frenos, 1.600 km), con el sello del grupo de
       las presiones objetivo.
 
