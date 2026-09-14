@@ -151,6 +151,13 @@ coinciden con la pantalla ("Pastillas freno del. en 1900 km", ITV 17.01.2027), y
 el Check Control del coche ("Es preciso sustituir las pastillas de freno") es el
 mismo aviso que la API da en inglés.
 
+**`conditionBasedServices` también puede llegar vacío. Verificado el
+2026-09-14:** en la lectura de las 14:20 UTC, con el coche recién aparcado tras
+el viaje, llegó con `value: null` y `timestamp: null`. En la de 35 minutos antes
+había llegado con valor. Ese día los vacíos fueron 11. Las herramientas lo
+declaran ("Desglose CBS: no disponible") y se quedan con la cifra global. En esa
+lectura no hay previsión, porque no hay partidas de las que calcularla.
+
 **Discrepancia sin explicar:** `conditionBasedServicesCount` devolvió **9**
 mientras el array traía **5** partidas. Se desconoce el motivo. Las herramientas
 dan los dos números y **no fingen que cuadran**. El 2026-09-13 seguía igual: 9
@@ -184,6 +191,11 @@ centinelas**:
 - Encaja con CBS: con 2.100 km restantes a los 48.283, los frenos cruzan el
   umbral de preaviso de 2.000 km hacia los 48.383, y el aviso se registró a los
   48.376.
+- **Corregido el 2026-09-14: tampoco es el kilómetro en que saltó el aviso.** El
+  mismo aviso (id 907, mismo texto) volvió con **48712**, el cuentakilómetros de
+  ese momento. Es el kilometraje de la última vez que el coche envió el aviso,
+  así que el ajuste con CBS del punto anterior fue casualidad. La herramienta
+  dice ahora "último envío del coche a los X km".
 
 ### Neumáticos
 

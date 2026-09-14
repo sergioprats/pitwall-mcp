@@ -87,7 +87,7 @@ def render_check_control(snapshot: TelematicSnapshot) -> list[str]:
     lines = [f"Check Control: {counted}   ({format_moment(entry.moment)})"]
     for message in messages:
         mileage = (
-            f" (registrado a los {message.mileage_km:,} km)".replace(",", ".")
+            f" (ultimo envio del coche a los {message.mileage_km:,} km)".replace(",", ".")
             if message.mileage_km is not None
             else ""
         )

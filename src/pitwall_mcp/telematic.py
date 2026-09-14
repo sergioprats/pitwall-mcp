@@ -283,8 +283,11 @@ class CheckControlMessage:
       `description` came as real JSON nulls.
     * `unitOfLengthRemaining` is NOT a remaining distance. It read 48376 while
       the odometer went from 48283 (8 Sep) to 48440 (13 Sep), and CBS gave the
-      same front brakes 1900 km left. It is kept as the mileage the message
-      refers to; BMW does not document the field.
+      same front brakes 1900 km left.
+    * Nor is it the mileage at which the warning first fired, as first assumed.
+      On 2026-09-14 the same message, id 907 with the same text, came back
+      with 48712: the odometer of that moment. It is the mileage of the latest
+      time the car sent the message. BMW does not document the field.
     """
 
     id: int | None
