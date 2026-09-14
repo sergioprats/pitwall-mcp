@@ -1,5 +1,7 @@
 # pitwall-mcp
 
+<!-- mcp-name: io.github.sergioprats/pitwall-mcp -->
+
 Servidor MCP local, **de solo lectura**, sobre la API BMW CarData de un
 BMW X1 sDrive18i (U11, gasolina, España).
 
@@ -81,14 +83,21 @@ ausencia**: no rellenan el hueco con ceros ni con un valor plausible. `puStep`
 no llega en `/basicData` para este coche, y el diagnóstico de neumáticos vuelve
 con etiquetas y ceros de relleno que no son medidas.
 
+`get_vehicle_status()` y `get_maintenance_summary()` muestran también los avisos
+**Check Control**, y añaden una línea `OJO` cuando alguna partida CBS deja de
+estar en `OK`. La cifra global de próximo servicio no basta: con los frenos
+delanteros en `PENDING` a 1.900 km, marcaba 13.560.
+
 `diagnose_software_update()` razona sobre la **serie** del histórico, no sobre
 una foto. De las tres condiciones que BMW documenta para no ofrecer una
 actualización, CarData sólo permite observar una, y la herramienta declara las
 otras dos como `NO OBSERVABLE POR CARDATA` en lugar de razonar como si las
-hubiera descartado. Con menos de dos observaciones distintas responde
-**SIN VEREDICTO** y dice qué le falta. Y como `isIgnitionOn` llega vacío, avisa
-de que parte de cualquier pendiente puede ser sólo motor en marcha frente a
-motor parado, no una batería descargándose.
+hubiera descartado. Deja fuera cualquier voltaje de 13,5 V o más, porque eso es
+el alternador cargando y no dice nada de la batería en reposo. Si no le quedan al
+menos dos observaciones en reposo, responde **SIN VEREDICTO** y dice qué le
+falta. Y como `isIgnitionOn` llega vacío, avisa de que parte de cualquier
+pendiente puede ser sólo motor en marcha frente a motor parado, no una batería
+descargándose.
 
 ---
 
@@ -122,8 +131,8 @@ Requiere **Python 3.12+**.
 git clone https://github.com/sergioprats/pitwall-mcp
 cd pitwall-mcp
 python -m venv .venv
-pip install -e ".[dev]"
-python scripts/refresh_catalogue.py
+.venv/Scripts/python.exe -m pip install -e ".[dev]"   # Linux/macOS: .venv/bin/python
+.venv/Scripts/python.exe scripts/refresh_catalogue.py
 ```
 
 Ese último paso **no es opcional**: el catálogo telemático es un documento de
@@ -235,8 +244,21 @@ como fixtures. La Fase 2 (daemon MQTT de streaming) es **diseño, no código**; 
 esquema SQLite ya reserva la columna `source` y la tabla `stream_state` para no
 necesitar migración.
 
-Queda abierto si los 11 descriptores que vuelven vacíos se rellenan con el coche
-despierto: sólo se sabrá leyendo con el contacto dado.
+Lo que ya se sabe de este coche, verificado con lecturas reales entre el 7 y el
+14 de septiembre de 2026:
+
+- **10 de los 32 descriptores del contenedor llegan siempre vacíos**, incluso
+  con el contacto dado y el coche rodando. Entre ellos están el estado de carga
+  de la batería, el sueño profundo, el contacto y las temperaturas de los
+  neumáticos. No es falta de lectura: este coche no los emite.
+- **El voltaje de la batería de 12 V viaja en un grupo que por REST se refresca
+  muy de tarde en tarde**, y hasta ahora siempre con el motor en marcha. Por
+  REST no hay forma de construir una serie de la batería en reposo. La vía para
+  tenerla es el streaming de la Fase 2.
+- Quedan abiertos otros tres puntos:
+  - por qué el contador de CBS dice 9 cuando el desglose trae 5 partidas;
+  - en qué huso horario reinicia BMW la cuota diaria;
+  - si ese grupo del voltaje se refresca alguna vez con el coche parado.
 
 ---
 

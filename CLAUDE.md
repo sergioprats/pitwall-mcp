@@ -470,14 +470,18 @@ Estado comprobado el 2026-09-13:
 
 **1. Retoques locales, sin riesgo:**
 
-- [ ] La sección "Estado" del README está desfasada. Aún da por abierto si los
+- [x] La sección "Estado" del README está desfasada. Aún da por abierto si los
       11 vacíos se rellenan con el contacto dado: se cerró el 2026-09-08, y
       desde el 2026-09-13 son 10. Debe decir también que la REST no da serie de
       voltaje en reposo.
-- [ ] Añadir al README `mcp-name: io.github.sergioprats/pitwall-mcp`. Lo exige
+- [x] Añadir al README `mcp-name: io.github.sergioprats/pitwall-mcp`. Lo exige
       el registro MCP para demostrar la propiedad de un paquete de PyPI.
-      **Verificar el formato exacto en la documentación del registro antes de
-      publicar.**
+      Verificado el 2026-09-14 en la documentación del registro: puede ir en un
+      comentario HTML, que es como está, pero el nombre tiene que coincidir con
+      el de `server.json`.
+- [ ] **`server.json` usa el esquema `2025-07-09`**, y la documentación del
+      registro ya pone de ejemplo el `2025-12-11`. Actualizarlo y validarlo con
+      `mcp-publisher` justo antes de publicar.
 - [ ] **Documentación final**, pedida por el usuario el 2026-09-14 para cuando el
       proyecto esté listo: pasos para publicar, cómo instalarlo y usarlo, y
       qué ventajas aporta usar este MCP frente a la app o el portal. Sin
