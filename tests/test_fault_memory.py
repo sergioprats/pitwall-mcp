@@ -20,7 +20,11 @@ from pitwall_mcp.tools import fault_tools
 
 
 def real_xml() -> str:
-    """The fault memory as this U11 sent it on 14 Sep 2026."""
+    """The fault memory as this U11 sent it on 14 Sep 2026, codes anonymised.
+
+    Structure, ECU addresses, order and header are the real ones. Each code was
+    renamed in arrival order to X00001, X00002, ...
+    """
     return load_fixture("telematic_extended.json")["telematicData"][FAULT_MEMORY]["value"]
 
 
@@ -67,10 +71,10 @@ def _memory(*codes: tuple[int, str]):
 def test_compare_names_what_appeared_and_what_was_cleared():
     appeared, cleared = compare(
         _memory((29, "X00001"), (99, "ABCDEF")),
-        _memory((29, "X00001"), (13, "X00006")),
+        _memory((29, "X00001"), (13, "X00099")),
     )
 
-    assert appeared == [(13, "X00006")]
+    assert appeared == [(13, "X00099")]
     assert cleared == [(99, "ABCDEF")]
 
 

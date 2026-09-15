@@ -644,10 +644,20 @@ Estado comprobado el 2026-09-13:
       qué ventajas aporta usar este MCP frente a la app o el portal. Sin
       prometer nada que el coche no emita: las ventajas se describen con los
       datos que de verdad llegan.
-- [ ] **Decidir si se anonimizan los códigos de avería de
-      `tests/fixtures/telematic_extended.json`** antes de hacer público el
-      repositorio. No llevan VIN ni ningún identificador, pero son la memoria de
-      averías real de este coche.
+- [x] **Códigos de avería anonimizados el 2026-09-15**, por decisión del
+      usuario. En `tests/fixtures/telematic_extended.json` cada código real pasa
+      a `X00001`, `X00002`... en orden de llegada, con el mismo largo que el
+      real (39 tenían seis caracteres y cinco, cinco). Así el XML conserva sus
+      1.615 caracteres, las 13 centralitas,
+      el orden y la cabecera `dtcCount="72"`. El prefijo `X` no es hexadecimal:
+      nadie puede confundirlos con códigos de BMW. **Historial reescrito el
+      mismo día** con `git filter-branch --index-filter`, sobre los 7 commits
+      locales sin subir: la fixture ya nace anonimizada en "Create the extended
+      container", y el árbol final no cambió. Nada de eso estaba subido, así
+      que no hubo force-push. La copia anterior quedó en
+      `refs/original-dtc/`, **con los códigos reales**. Junto a
+      `refs/original/`, la de la purga de `spec/*.json`, solo se sube con
+      `git push --mirror`. **Nunca usar `--mirror` con este repo.**
 - [ ] Commit de lo anterior.
 
 **2. Decisiones del usuario. Salen fuera o borran, y no se deshacen fácilmente:**
