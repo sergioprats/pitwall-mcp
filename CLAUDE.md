@@ -541,6 +541,11 @@ Pasos, siempre a mano:
 
 Hasta el paso 2, todo sigue funcionando con el contenedor de 32.
 
+**Hecho el 2026-09-14.** Contenedor de 42 creado a las 14:28 UTC y antiguo
+borrado a las 14:33 UTC. Un `--list` posterior lo confirma. **Un contenedor
+borrado sigue apareciendo en el listado**, con estado `DELETED`, junto al activo
+(`ACTIVE`). El ciclo completo costó 4 peticiones: crear, leer, borrar y listar.
+
 ---
 
 ## Errores útiles
