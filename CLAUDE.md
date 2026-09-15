@@ -629,9 +629,16 @@ Estado comprobado el 2026-09-13:
       Verificado el 2026-09-14 en la documentación del registro: puede ir en un
       comentario HTML, que es como está, pero el nombre tiene que coincidir con
       el de `server.json`.
-- [ ] **`server.json` usa el esquema `2025-07-09`**, y la documentación del
-      registro ya pone de ejemplo el `2025-12-11`. Actualizarlo y validarlo con
-      `mcp-publisher` justo antes de publicar.
+- [x] **`server.json` pasa al esquema `2025-12-11`. Hecho el 2026-09-15.** El
+      fichero **no validaba contra el `2025-07-09` que declaraba**: aquel esquema
+      usaba snake_case (`registry_type`, `environment_variables`) y el nuestro ya
+      estaba en camelCase, que es lo que pide el `2025-12-11`. Contra el nuevo
+      solo fallaba la descripción: **máximo 100 caracteres**, y tenía 129. Queda
+      en 97, con el aviso de no afiliación dentro. Se quita `status`, que el
+      esquema nuevo ya no define (lo gestiona el registro), y se añade `title`.
+      Validado con `jsonschema` contra el esquema descargado. **Falta repetir la
+      validación con `mcp-publisher`** justo antes de publicar, por si el
+      esquema vuelve a cambiar.
 - [ ] **Documentación final**, pedida por el usuario el 2026-09-14 para cuando el
       proyecto esté listo: pasos para publicar, cómo instalarlo y usarlo, y
       qué ventajas aporta usar este MCP frente a la app o el portal. Sin
