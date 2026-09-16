@@ -202,6 +202,10 @@ centinelas**:
   han caído. **No se interpreta más.** La herramienta enseña el campo pelado
   ("campo de km del aviso"), dice que BMW no lo documenta y que ha cambiado
   entre lecturas.
+- **2026-09-16: la serie va por 48376, 48712, 48376, 48376.** El mismo aviso 907,
+  con el mismo texto y un sello nuevo (15-09 a las 16:41), volvió a traer 48376
+  con el coche ya en 48.731 km. Descarta también que sea el kilometraje del
+  último envío: el 48712 es el raro, no la norma. Sigue sin interpretarse.
 
 ### Neumáticos
 
@@ -237,6 +241,12 @@ con presiones de 260/260/250/250. Es el mismo 250 de la lectura en frío del 7
 de septiembre. **El objetivo compensado por temperatura queda casi confirmado**:
 250 en frío, hasta 290 en caliente. No llega a confirmarse del todo porque la
 temperatura sigue sin llegar.
+
+**2026-09-16, encaja otra vez:** con sellos del día anterior recién terminado un
+trayecto, objetivo 280/280/270/270 y presiones 270/270/260/260. Ni el objetivo
+más bajo de la lectura en frío ni el más alto de la caliente; un punto
+intermedio, con el neumático a medio enfriar. Las cuatro temperaturas siguen
+vacías, así que la compensación sigue sin poder demostrarse.
 
 ### Tercer estado: presente y vacío
 
@@ -679,9 +689,10 @@ Orden recomendado: borrar la rama de backup, subir y hacer público, PyPI y, por
 último, el registro. Ese orden es obligatorio: el registro comprueba el paquete
 de PyPI, y PyPI enlaza al repositorio.
 
-**3. Abierto, pero no impide publicar:** la prueba de la noche parado (2
-peticiones), la discrepancia 9 contra 5 del contador CBS, el huso horario del
-reinicio de cuota y la Fase 2.
+**3. Abierto, pero no impide publicar:** la discrepancia 9 contra 5 del contador
+CBS, la de 72 contra 44 de la memoria de averías, el huso horario del reinicio de
+cuota y la Fase 2. **La prueba de la noche parado ya no está abierta: se hizo el
+2026-09-16 y salió negativa** (ver riesgo 11).
 
 ---
 
@@ -810,6 +821,33 @@ reinicio de cuota y la Fase 2.
       midieron los litros, que pueden ser más antiguos que el porcentaje.
     - CBS volvió a llegar con valor (frenos, 1.600 km), con el sello del grupo de
       las presiones objetivo.
+
+    **2026-09-16 a las 06:09 UTC, tras dos noches paradas y un trayecto de 18 km
+    el día 15. La prueba de la noche queda hecha, y sale negativa.** El grupo
+    lento **no se movió**: doce descriptores siguen con el sello del 14 a las
+    13:49, cuarenta horas después. Entre medias el coche rodó —el día 15 a las
+    16:56 hay kilometraje nuevo (48.731), presiones nuevas y depósito nuevo—, así
+    que ahora se sabe algo más: **rodar tampoco basta para refrescarlo**. Los
+    tres refrescos vistos siguen siendo los únicos tres, y ninguno lleva sello
+    nocturno.
+
+    El voltaje sigue clavado en **13,92 V con sello del 14**. El histórico local
+    tiene cuatro puntos de voltaje (14,39 / 14,35 / 14,77 / 13,92) y **los cuatro
+    son de alternador**: con el umbral de 13,5 V, `diagnose_software_update`
+    sigue sin un solo punto en reposo que juzgar. La Fase 2 sigue siendo la única
+    vía conocida.
+
+    **Confirmación en vivo del fallo que se corrigió el 14:** el nivel del
+    depósito bajó del 58 % al 52 % con sello del 15, mientras los litros seguían
+    en **24 con sello del 14**, porque `remainingFuel` viaja en el grupo lento.
+    Es exactamente el caso que se inventaba un consumo. `get_fuel_status` dice
+    ahora que los litros son más antiguos que el porcentaje y no calcula nada.
+
+    La memoria de averías llegó idéntica y con el mismo sello del 14, así que el
+    histórico sigue teniendo **un solo sello distinto** de ese descriptor. Que
+    `get_fault_memory` diga "no hay con qué comparar" tras tres lecturas es
+    correcto: `changes()` colapsa el mismo valor reenviado, que es justo lo que
+    se pretendía.
 
 ---
 
