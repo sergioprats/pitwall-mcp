@@ -206,6 +206,10 @@ centinelas**:
   con el mismo texto y un sello nuevo (15-09 a las 16:41), volvió a traer 48376
   con el coche ya en 48.731 km. Descarta también que sea el kilometraje del
   último envío: el 48712 es el raro, no la norma. Sigue sin interpretarse.
+- **2026-09-18: quinto valor, 48752**, con el coche en 48.756 km. La serie
+  completa va 48376, 48712, 48376, 48376, 48752. Tres de los cinco valores están
+  cerca del cuentakilómetros del momento y dos no. Sigue sin interpretarse: van
+  dos hipótesis caídas y no se hace una tercera.
 
 ### Neumáticos
 
@@ -247,6 +251,12 @@ trayecto, objetivo 280/280/270/270 y presiones 270/270/260/260. Ni el objetivo
 más bajo de la lectura en frío ni el más alto de la caliente; un punto
 intermedio, con el neumático a medio enfriar. Las cuatro temperaturas siguen
 vacías, así que la compensación sigue sin poder demostrarse.
+
+**2026-09-18, otro punto en frío:** objetivo **250 en las cuatro** y presiones
+260/260/250/250, con el coche parado de madrugada. Es el tercer 250 en frío
+(7-09, 14-09 y hoy), frente a los 280/290 de las lecturas en caliente. El patrón
+se repite sin excepción hasta ahora, y sigue sin poder demostrarse mientras las
+cuatro temperaturas lleguen vacías.
 
 ### Tercer estado: presente y vacío
 
@@ -378,6 +388,23 @@ serie**, y ninguna herramienta puede presentarlo como consumo actual.
   códigos de BMW son del fabricante. Una herramienta puede contarlos, agruparlos
   y, sobre todo, **compararlos entre lecturas**: códigos nuevos, códigos
   borrados tras el taller. Traducirlos no.
+
+**2026-09-18: la memoria cambia por primera vez, y bastante.** Frente a la del
+14, hay **11 códigos nuevos y 11 que desaparecen**. Aparece entera la centralita
+**33**, que no se había visto nunca, con 10 códigos `D154xx` más uno corto; y se
+van completas las centralitas **13, 55 y 57**. Quedan 44 entradas repartidas
+ahora en 11 centralitas, no 13.
+
+Dos cosas que esto enseña:
+
+- **La cabecera se mueve por su cuenta: pasó de `dtcCount="72"` a `dtcCount="67"`
+  con 44 entradas en las dos lecturas.** La diferencia no es un desfase fijo ni
+  un recorte del XML: el número de la cabecera cambia sin que cambie el número de
+  entradas. Se siguen dando los dos números y se sigue sin explicar.
+- **La comparación entre lecturas era la decisión correcta.** Es lo único que
+  esta herramienta puede aportar sobre la memoria de averías, y aquí ha aportado
+  algo real. Lo que no puede decir es qué significan: para eso hace falta una
+  herramienta de diagnóstico por OBD.
 
 `conditionBasedServices` siguió vacío también en esta lectura.
 
@@ -848,6 +875,24 @@ cuota y la Fase 2. **La prueba de la noche parado ya no está abierta: se hizo e
     `get_fault_memory` diga "no hay con qué comparar" tras tres lecturas es
     correcto: `changes()` colapsa el mismo valor reenviado, que es justo lo que
     se pretendía.
+
+    **2026-09-18 a las 06:21 UTC: cuarto refresco del grupo lento, y otra vez con
+    el alternador.** Trece descriptores llegaron con sello común del 17 a las
+    21:23 y **14,8 V**. Van cuatro refrescos vistos y los cuatro con el motor en
+    marcha; el histórico local tiene ya cinco voltajes y **ninguno en reposo**.
+    Con el umbral de 13,5 V, `diagnose_software_update` sigue sin nada que
+    juzgar, y la Fase 2 sigue siendo la única vía.
+
+    En ese refresco sí se movieron cosas que llevaban días clavadas:
+    `serviceDistance.next` de 13460 a 13380, los litros del depósito de 24 a 19,
+    la temperatura del refrigerante a 90 °C y la memoria de averías. Así que el
+    grupo no está congelado: se refresca de tarde en tarde, con el coche en
+    marcha, y entre refrescos arrastra el valor viejo. Es exactamente el
+    comportamiento para el que se corrigió `get_fuel_status`.
+
+    **`conditionBasedServices` llegó vacío por segunda vez.** El resumen dio solo
+    la cifra global y lo declaró, sin previsión, porque sin partidas no hay de
+    qué calcularla.
 
 ---
 
