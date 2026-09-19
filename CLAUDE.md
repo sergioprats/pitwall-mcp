@@ -676,11 +676,15 @@ Estado comprobado el 2026-09-13:
       Validado con `jsonschema` contra el esquema descargado. **Falta repetir la
       validación con `mcp-publisher`** justo antes de publicar, por si el
       esquema vuelve a cambiar.
-- [ ] **Documentación final**, pedida por el usuario el 2026-09-14 para cuando el
-      proyecto esté listo: pasos para publicar, cómo instalarlo y usarlo, y
-      qué ventajas aporta usar este MCP frente a la app o el portal. Sin
-      prometer nada que el coche no emita: las ventajas se describen con los
-      datos que de verdad llegan.
+- [x] **Documentación final. Hecha el 2026-09-19.** Los pasos de publicación van
+      a `docs/publicacion.md`, aparte, porque solo sirven a quien publica: el
+      orden obligatorio, las referencias que solo saldrían con `--mirror`, y la
+      validación del esquema. El README recibe una sección **"Por qué esto y no
+      la app oficial"**, con cuatro ventajas y sus ejemplos reales, y con lo que
+      **no** aporta: no traduce códigos de avería —para eso hace falta una
+      herramienta OBD— y no escribe nada. La sección "Estado" se pone al día:
+      42 descriptores, 13 siempre vacíos más el CBS que va y viene, cinco
+      voltajes y ninguno en reposo.
 - [x] **Códigos de avería anonimizados el 2026-09-15**, por decisión del
       usuario. En `tests/fixtures/telematic_extended.json` cada código real pasa
       a `X00001`, `X00002`... en orden de llegada, con el mismo largo que el
@@ -695,7 +699,8 @@ Estado comprobado el 2026-09-13:
       `refs/original-dtc/`, **con los códigos reales**. Junto a
       `refs/original/`, la de la purga de `spec/*.json`, solo se sube con
       `git push --mirror`. **Nunca usar `--mirror` con este repo.**
-- [ ] Commit de lo anterior.
+- [x] Commit de lo anterior. **Con esto, el punto 1 queda cerrado entero: lo que
+      falta para publicar son solo decisiones tuyas (punto 2).**
 
 **2. Decisiones del usuario. Salen fuera o borran, y no se deshacen fácilmente:**
 

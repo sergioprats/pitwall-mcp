@@ -90,18 +90,13 @@ con etiquetas y ceros de relleno que no son medidas.
 estar en `OK`. La cifra global de próximo servicio no basta: con los frenos
 delanteros en `PENDING` a 1.900 km, marcaba 13.560.
 
-`get_maintenance_summary()` añade dos cosas que la app oficial no da, sin gastar
-peticiones:
-
-- **Previsión.** La app dice "1.600 km". El resumen dice cuándo: unas 2,8
-  semanas, hacia el 4 de octubre, al ritmo al que de verdad se usa el coche.
-  Toma la media semanal de BMW o la del histórico local, la mayor de las dos, y
-  avisa si una partida vence antes por km que por fecha.
-- **Tendencia de neumáticos por eje.** Compara cada rueda con su pareja de eje
-  en la misma lectura, que comparte temperatura y carga. Solo avisa de posible
-  fuga lenta si la diferencia crece. Comparar con el objetivo a secas
-  confundiría el calor del neumático con una fuga, porque el objetivo sube con
-  la temperatura.
+`get_maintenance_summary()` añade además, **sin gastar peticiones**, una
+previsión en semanas y fechas y la tendencia de presiones por eje. Las dos salen
+del histórico local, y el porqué de cada una está en
+[Por qué esto y no la app oficial](#por-qué-esto-y-no-la-app-oficial). La
+previsión usa la media semanal de BMW o la del histórico, la mayor de las dos,
+para no quedarse corta, y avisa cuando una partida vence antes por kilómetros
+que por fecha.
 
 Dos herramientas más con datos que la app oficial no enseña:
 
@@ -129,6 +124,43 @@ descargándose.
 
 ---
 
+## Por qué esto y no la app oficial
+
+La app te enseña el estado de hoy. Esto guarda cada lectura, así que puede
+comparar. Cuatro cosas concretas que salen de ahí, todas vistas en este coche:
+
+- **Cuándo, no solo cuánto.** La app dice "frenos delanteros, 1.600 km". El
+  resumen dice unas 2,8 semanas, hacia el 5 de octubre, al ritmo real de uso, y
+  avisa si una partida vence antes por kilómetros que por fecha.
+- **La cifra global no basta, y aquí se ve.** Con los frenos en `PENDING` a
+  1.900 km, `serviceDistance.next` marcaba 13.560. Quedarse con ese número
+  habría escondido lo único urgente, así que toda partida que BMW no marque
+  `OK` sale con un aviso propio.
+- **Neumáticos sin confundir el calor con una fuga.** El objetivo de presión de
+  BMW no es fijo: se ha visto en 250 kPa en frío y en 290 con el neumático
+  caliente. Comparar la presión de hoy con un objetivo de otro momento da un
+  diferencial falso, así que cada rueda se compara con su pareja de eje **en la
+  misma lectura**, que comparte temperatura y carga.
+- **Qué cambia en la memoria de averías.** El 18 de septiembre, entre dos
+  lecturas, entraron 11 códigos y salieron otros 11: apareció una centralita
+  entera y desaparecieron tres. Eso no se ve en ningún sitio si no guardas la
+  lectura anterior.
+
+Y lo que **no** aporta, para que no haya malentendidos:
+
+- **No traduce los códigos de avería.** Su significado no está en el catálogo de
+  BMW; inventarlo sería peor que no darlo. Para eso está una herramienta de
+  diagnóstico por OBD, del estilo de BimmerLink, que además los lee con su
+  descripción y puede borrarlos.
+- **No escribe nada.** Ni codificación, ni resets, ni una sola orden al coche.
+  Eso es terreno de BimmerCode y de un adaptador OBD, con el coche delante.
+- **No inventa lo que no llega.** Un dato ausente, uno presente pero vacío y un
+  `-NA-` son tres cosas distintas, y las herramientas las distinguen en vez de
+  enseñar un cero. De los 42 descriptores del contenedor, en la última lectura
+  llegaron 28 con valor y 14 vacíos.
+
+---
+
 ## El informe local
 
 El histórico que va guardando el servidor no se ve en ningún sitio: las
@@ -145,7 +177,7 @@ toca el contador de cuota: sólo lee la base de datos local. La página es un
 único fichero sin JavaScript ni dependencias externas, imprime bien, y sale con
 el VIN enmascarado a `captures/`, que está en `.gitignore`.
 
-Lo primero que enseña no es un número, es cuántos de los 32 descriptores del
+Lo primero que enseña no es un número, es cuántos de los 42 descriptores del
 contenedor traen valor de verdad, y en cuál de los tres estados vacíos está cada
 uno de los demás.
 
@@ -267,6 +299,10 @@ Documentación relevante:
 - [`CLAUDE.md`](CLAUDE.md) — documento de gobierno del repositorio.
 - [`docs/paso-0-descriptores.md`](docs/paso-0-descriptores.md) — los descriptores
   confirmados, lo que no existe, y las rarezas del catálogo y del swagger.
+- [`docs/publicacion.md`](docs/publicacion.md) — cómo se publica esto: el orden
+  de los pasos, y qué no debe salir del repositorio.
+- [`docs/streaming-design.md`](docs/streaming-design.md) — la Fase 2, el daemon
+  MQTT. Diseño, no código.
 
 ---
 
@@ -278,20 +314,31 @@ esquema SQLite ya reserva la columna `source` y la tabla `stream_state` para no
 necesitar migración.
 
 Lo que ya se sabe de este coche, verificado con lecturas reales entre el 7 y el
-14 de septiembre de 2026:
+18 de septiembre de 2026:
 
-- **10 de los 32 descriptores del contenedor llegan siempre vacíos**, incluso
+- **13 de los 42 descriptores del contenedor llegan siempre vacíos**, incluso
   con el contacto dado y el coche rodando. Entre ellos están el estado de carga
-  de la batería, el sueño profundo, el contacto y las temperaturas de los
-  neumáticos. No es falta de lectura: este coche no los emite.
+  de la batería, el sueño profundo, el contacto, si el coche se mueve y las
+  temperaturas de los neumáticos. No es falta de lectura: este coche no los
+  emite. El decimocuarto, el desglose CBS, va y viene: unas lecturas trae las
+  partidas y otras llega vacío.
 - **El voltaje de la batería de 12 V viaja en un grupo que por REST se refresca
-  muy de tarde en tarde**, y hasta ahora siempre con el motor en marcha. Por
-  REST no hay forma de construir una serie de la batería en reposo. La vía para
-  tenerla es el streaming de la Fase 2.
+  muy de tarde en tarde.** Se le han visto cuatro refrescos, y los cuatro con el
+  motor en marcha. Los cinco voltajes del histórico —14,39 / 14,35 / 14,77 /
+  13,92 / 14,80 V— son tensión de alternador, por encima del umbral de 13,5 V.
+  **Leer más veces no lo arregla**, y está comprobado: ni una noche entera
+  parado ni un trayecto por medio lo refrescan. Por REST no hay forma de
+  construir una serie de la batería en reposo, y por eso `diagnose_software_update`
+  se queda en `SIN VEREDICTO` en vez de fingir uno. La única vía conocida para
+  esa serie es el streaming de la Fase 2.
 - Quedan abiertos otros tres puntos:
-  - por qué el contador de CBS dice 9 cuando el desglose trae 5 partidas;
+  - por qué el contador de CBS dice 9 cuando el desglose trae 5 partidas, y por
+    qué la memoria de averías anuncia 72 códigos —luego 67— trayendo 44
+    entradas en las dos lecturas;
   - en qué huso horario reinicia BMW la cuota diaria;
-  - si ese grupo del voltaje se refresca alguna vez con el coche parado.
+  - qué es el campo de kilómetros que acompaña a los avisos Check Control. Van
+    dos interpretaciones probadas y las dos han caído, así que la herramienta lo
+    enseña pelado y dice que BMW no lo documenta.
 
 ---
 
