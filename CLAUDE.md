@@ -704,15 +704,22 @@ Estado comprobado el 2026-09-13:
 
 **2. Decisiones del usuario. Salen fuera o borran, y no se deshacen fácilmente:**
 
-- [ ] **Borrar la rama local `backup-antes-de-purgar`**, o sacarla a un bundle
-      fuera del repo. Tiene 24 commits que no están en `main` y, por su nombre,
-      conserva el historial de antes de purgar `spec/*.json`. No tiene upstream,
-      pero un `git push --all` la subiría. **Nunca usar `--all` con este repo
-      mientras exista.**
-- [ ] Subir `main` y hacer público el repositorio.
+- [x] **Copias de seguridad resueltas el 2026-09-19.** La rama
+      `backup-antes-de-purgar` se sacó a
+      `../pitwall-mcp-backup-antes-de-purgar.bundle` (213 KB, verificado) y se
+      borró, junto con `refs/original/` y `refs/original-dtc/`. Después,
+      `reflog expire` y `gc --prune=now`: los objetos ya no están en el
+      repositorio, y una búsqueda de los códigos de avería reales en todas las
+      referencias no devuelve nada. **El aviso de no usar `--all` ni `--mirror`
+      ya no aplica: no queda nada que puedan filtrar.**
+- [x] **`main` subido y repositorio público el 2026-09-19.** 16 commits,
+      `f949500..94fc317`.
 - [ ] Publicar la 0.1.0 en PyPI. Un número de versión publicado no se puede
       reutilizar. Hace falta una cuenta de PyPI con token, o publicación
-      directa desde GitHub (trusted publishing).
+      directa desde GitHub (trusted publishing). **Paquete ya construido y
+      validado el 2026-09-19** (`python -m build`, `twine check` correcto): el
+      wheel lleva 35 ficheros, `schema.sql` incluido, y ningún documento de BMW.
+      Solo falta subirlo, que exige credenciales del usuario.
 - [ ] Registrar en `registry.modelcontextprotocol.io` con `mcp-publisher`,
       entrando con la cuenta de GitHub `sergioprats`. Validar `server.json`
       contra el esquema vigente en ese momento.
