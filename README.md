@@ -297,6 +297,8 @@ a partir de los esquemas del swagger. Una suite que gaste cuota es un bug.
 Documentación relevante:
 
 - [`CLAUDE.md`](CLAUDE.md) — documento de gobierno del repositorio.
+- [`docs/resumen-del-proyecto.md`](docs/resumen-del-proyecto.md) — qué hace, cómo
+  lo hace y para qué sirve, para quien llega de nuevas.
 - [`docs/paso-0-descriptores.md`](docs/paso-0-descriptores.md) — los descriptores
   confirmados, lo que no existe, y las rarezas del catálogo y del swagger.
 - [`docs/publicacion.md`](docs/publicacion.md) — cómo se publica esto: el orden
