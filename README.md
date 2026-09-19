@@ -13,6 +13,54 @@ Le da a un asistente acceso a los datos de mantenimiento del coche —
 kilometraje, avisos CBS, presiones de neumáticos, batería de 12 V — sin que
 pueda tocar nada del vehículo, y sin agotar la cuota diaria de la API.
 
+## Qué se siente al usarlo
+
+Le preguntas al asistente *"¿qué le toca al coche?"* y contesta con esto. Es una
+respuesta real, de la lectura del 16 de septiembre de 2026, recortada:
+
+```
+RESUMEN DE MANTENIMIENTO
+
+Kilometraje: 48.731 km
+Proximo servicio en: 13460 km
+  OJO: hay partidas CBS que BMW ya no marca como OK; no te fies solo de la
+  cifra global: Frenos delanteros [PENDING]: 1.600 km.
+
+Partidas CBS: 5
+  - Frenos delanteros [PENDING]: 1.600 km
+  - Aceite de motor [OK]: 14.000 km, hasta 2027-07
+  - Inspeccion tecnica (ITV) [OK]: hasta 2027-01
+  AVISO: conditionBasedServicesCount dice 9 pero el desglose trae 5 partidas.
+  BMW no documenta la diferencia y no se explica aqui: se dan los dos numeros.
+
+Prevision orientativa (calculo propio sobre los km de BMW, no un dato de BMW):
+  Ritmo usado: 570 km/semana (media semanal que da BMW); tu historico local,
+  8 dias: 420. Se usa el mayor para no quedarse corto.
+  - Frenos delanteros: 1.600 km, unas 2,8 semanas, hacia el 05-10-2026.
+
+Bateria de 12V:
+  Voltaje: 13.92 V   (2026-09-14 13:49 UTC (hace 40 horas))
+
+Dato mas antiguo utilizado: 2026-09-14 13:49 UTC (hace 40 horas).
+Procedencia: cache local. Lectura realizada: 2026-09-16 06:09 UTC.
+```
+
+Fíjate en lo que hace esa respuesta además de dar números: **avisa de que la
+cifra global esconde lo urgente**, traduce "1.600 km" a una fecha, **admite que
+dos cifras de BMW no cuadran** en vez de elegir una, y dice de cuándo es el dato
+más viejo que ha usado.
+
+## ¿Te sirve a ti?
+
+- **Sí** si tienes un BMW con CarData activado y quieres saber **qué cambia con
+  el tiempo**: cuándo vence cada cosa de verdad, si una rueda pierde aire, qué
+  códigos de avería han aparecido desde la última vez.
+- **No** si buscas traducir códigos de avería, borrarlos o tocar cualquier ajuste
+  del coche. Eso es terreno de un diagnóstico por OBD, no de esta API.
+- **Ten en cuenta** que es de uso ocasional. El dato crudo ya lo enseña la
+  pantalla del coche; lo que aquí se añade es la serie, la previsión y los
+  cambios.
+
 ---
 
 ## Qué hace y qué no hace
@@ -60,6 +108,43 @@ Consulta `get_api_quota` antes de encadenar llamadas.
 | `/smartMaintenanceTyreDiagnosis` | 7 días |
 | `/basicData` | 30 días |
 | `/mappings` | 30 días |
+
+---
+
+## Por qué esto y no la app oficial
+
+La app te enseña el estado de hoy. Esto guarda cada lectura, así que puede
+comparar. Cuatro cosas concretas que salen de ahí, todas vistas en este coche:
+
+- **Cuándo, no solo cuánto.** La app dice "frenos delanteros, 1.600 km". El
+  resumen dice unas 2,8 semanas, hacia el 5 de octubre, al ritmo real de uso, y
+  avisa si una partida vence antes por kilómetros que por fecha.
+- **La cifra global no basta, y aquí se ve.** Con los frenos en `PENDING` a
+  1.900 km, `serviceDistance.next` marcaba 13.560. Quedarse con ese número
+  habría escondido lo único urgente, así que toda partida que BMW no marque
+  `OK` sale con un aviso propio.
+- **Neumáticos sin confundir el calor con una fuga.** El objetivo de presión de
+  BMW no es fijo: se ha visto en 250 kPa en frío y en 290 con el neumático
+  caliente. Comparar la presión de hoy con un objetivo de otro momento da un
+  diferencial falso, así que cada rueda se compara con su pareja de eje **en la
+  misma lectura**, que comparte temperatura y carga.
+- **Qué cambia en la memoria de averías.** El 18 de septiembre, entre dos
+  lecturas, entraron 11 códigos y salieron otros 11: apareció una centralita
+  entera y desaparecieron tres. Eso no se ve en ningún sitio si no guardas la
+  lectura anterior.
+
+Y lo que **no** aporta, para que no haya malentendidos:
+
+- **No traduce los códigos de avería.** Su significado no está en el catálogo de
+  BMW; inventarlo sería peor que no darlo. Para eso está una herramienta de
+  diagnóstico por OBD, del estilo de BimmerLink, que además los lee con su
+  descripción y puede borrarlos.
+- **No escribe nada.** Ni codificación, ni resets, ni una sola orden al coche.
+  Eso es terreno de BimmerCode y de un adaptador OBD, con el coche delante.
+- **No inventa lo que no llega.** Un dato ausente, uno presente pero vacío y un
+  `-NA-` son tres cosas distintas, y las herramientas las distinguen en vez de
+  enseñar un cero. De los 42 descriptores del contenedor, en la última lectura
+  llegaron 28 con valor y 14 vacíos.
 
 ---
 
@@ -121,43 +206,6 @@ menos dos observaciones en reposo, responde **SIN VEREDICTO** y dice qué le
 falta. Y como `isIgnitionOn` llega vacío, avisa de que parte de cualquier
 pendiente puede ser sólo motor en marcha frente a motor parado, no una batería
 descargándose.
-
----
-
-## Por qué esto y no la app oficial
-
-La app te enseña el estado de hoy. Esto guarda cada lectura, así que puede
-comparar. Cuatro cosas concretas que salen de ahí, todas vistas en este coche:
-
-- **Cuándo, no solo cuánto.** La app dice "frenos delanteros, 1.600 km". El
-  resumen dice unas 2,8 semanas, hacia el 5 de octubre, al ritmo real de uso, y
-  avisa si una partida vence antes por kilómetros que por fecha.
-- **La cifra global no basta, y aquí se ve.** Con los frenos en `PENDING` a
-  1.900 km, `serviceDistance.next` marcaba 13.560. Quedarse con ese número
-  habría escondido lo único urgente, así que toda partida que BMW no marque
-  `OK` sale con un aviso propio.
-- **Neumáticos sin confundir el calor con una fuga.** El objetivo de presión de
-  BMW no es fijo: se ha visto en 250 kPa en frío y en 290 con el neumático
-  caliente. Comparar la presión de hoy con un objetivo de otro momento da un
-  diferencial falso, así que cada rueda se compara con su pareja de eje **en la
-  misma lectura**, que comparte temperatura y carga.
-- **Qué cambia en la memoria de averías.** El 18 de septiembre, entre dos
-  lecturas, entraron 11 códigos y salieron otros 11: apareció una centralita
-  entera y desaparecieron tres. Eso no se ve en ningún sitio si no guardas la
-  lectura anterior.
-
-Y lo que **no** aporta, para que no haya malentendidos:
-
-- **No traduce los códigos de avería.** Su significado no está en el catálogo de
-  BMW; inventarlo sería peor que no darlo. Para eso está una herramienta de
-  diagnóstico por OBD, del estilo de BimmerLink, que además los lee con su
-  descripción y puede borrarlos.
-- **No escribe nada.** Ni codificación, ni resets, ni una sola orden al coche.
-  Eso es terreno de BimmerCode y de un adaptador OBD, con el coche delante.
-- **No inventa lo que no llega.** Un dato ausente, uno presente pero vacío y un
-  `-NA-` son tres cosas distintas, y las herramientas las distinguen en vez de
-  enseñar un cero. De los 42 descriptores del contenedor, en la última lectura
-  llegaron 28 con valor y 14 vacíos.
 
 ---
 
