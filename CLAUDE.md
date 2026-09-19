@@ -714,15 +714,21 @@ Estado comprobado el 2026-09-13:
       ya no aplica: no queda nada que puedan filtrar.**
 - [x] **`main` subido y repositorio público el 2026-09-19.** 16 commits,
       `f949500..94fc317`.
-- [ ] Publicar la 0.1.0 en PyPI. Un número de versión publicado no se puede
-      reutilizar. Hace falta una cuenta de PyPI con token, o publicación
-      directa desde GitHub (trusted publishing). **Paquete ya construido y
-      validado el 2026-09-19** (`python -m build`, `twine check` correcto): el
-      wheel lleva 35 ficheros, `schema.sql` incluido, y ningún documento de BMW.
-      Solo falta subirlo, que exige credenciales del usuario.
-- [ ] Registrar en `registry.modelcontextprotocol.io` con `mcp-publisher`,
-      entrando con la cuenta de GitHub `sergioprats`. Validar `server.json`
-      contra el esquema vigente en ese momento.
+- [x] **0.1.0 publicada en PyPI el 2026-09-19**:
+      https://pypi.org/project/pitwall-mcp/0.1.0/. El wheel lleva 35 ficheros,
+      `schema.sql` incluido, y ningún documento de BMW. **La subida hay que
+      lanzarla desde una terminal propia, no desde aquí**: `twine` pide usuario
+      y contraseña de forma interactiva, y una tarea en segundo plano no puede
+      recibirlos, así que se queda colgada sin subir nada. Usuario `__token__`,
+      contraseña el token con su prefijo `pypi-`.
+- [x] **Registrado en `registry.modelcontextprotocol.io` el 2026-09-19**, como
+      `io.github.sergioprats/pitwall-mcp` versión 0.1.0. `mcp-publisher validate`
+      aprobó el `server.json` antes de enviarlo. El registro comprueba la
+      propiedad del paquete **buscando la cadena `mcp-name:` en la descripción
+      publicada en PyPI**, que sale del README; está confirmado que el comentario
+      HTML viaja hasta los metadatos del paquete. El `login github` es un flujo
+      de dispositivo: sí se puede lanzar en segundo plano, porque imprime el
+      código y espera.
 
 Orden recomendado: borrar la rama de backup, subir y hacer público, PyPI y, por
 último, el registro. Ese orden es obligatorio: el registro comprueba el paquete
