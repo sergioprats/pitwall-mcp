@@ -766,7 +766,10 @@ Estado comprobado el 2026-09-13:
       y contraseña de forma interactiva, y una tarea en segundo plano no puede
       recibirlos, así que se queda colgada sin subir nada. Usuario `__token__`,
       contraseña el token con su prefijo `pypi-`.
-- [ ] **0.1.1 preparada el 2026-09-22, sin publicar.** Al instalar la 0.1.0 en un
+- [x] **0.1.1 publicada el 2026-09-22**: https://pypi.org/project/pitwall-mcp/0.1.1/,
+      en el registro MCP, y con el tag `v0.1.1` sobre el commit publicado. El
+      registro **mantiene listadas las dos versiones**, la 0.1.0 y la 0.1.1, cada
+      una con su paquete. Al instalar la 0.1.0 en un
       entorno limpio se vio el agujero: el paquete **no permitía autenticarse**.
       `TokenManager.device_login` viajaba dentro, pero sin puerta de entrada; el
       login solo existía en `scripts/login.py`, que no se empaqueta. Quien
@@ -782,6 +785,24 @@ Estado comprobado el 2026-09-13:
       el wheel se construya.** `twine check` pasaba, el paquete instalaba y el
       servidor arrancaba; el fallo solo aparece al intentar configurarlo desde
       cero en un entorno limpio.
+
+      **Dos trampas de publicación, verificadas las dos el 2026-09-22:**
+
+      1. **Vaciar `dist/` antes de construir.** `twine upload dist/*` sube todo
+         lo que encuentre, así que con los ficheros de la versión anterior
+         todavía dentro intenta resubirlos y PyPI lo rechaza: una versión
+         publicada no se puede reemplazar.
+      2. **La sesión de `mcp-publisher` caduca en días.** El login del 19 de
+         septiembre ya no valía el 22: `publish` devolvió `401 Invalid or
+         expired Registry JWT token`. Hay que repetir `mcp-publisher login
+         github` **antes de cada publicación**. Ese login sí se puede lanzar en
+         segundo plano, porque imprime el código y espera; `twine`, en cambio,
+         no, porque sus preguntas no llegan a una tarea en segundo plano.
+
+      Las credenciales de PyPI quedaron resueltas sin fichero en claro: el token
+      vive en el Administrador de credenciales de Windows vía `keyring`, y
+      `~/.pypirc` solo declara `username = __token__`. Con eso, `twine upload
+      --non-interactive` funciona sin teclear nada.
 - [x] **Registrado en `registry.modelcontextprotocol.io` el 2026-09-19**, como
       `io.github.sergioprats/pitwall-mcp` versión 0.1.0. `mcp-publisher validate`
       aprobó el `server.json` antes de enviarlo. El registro comprueba la
