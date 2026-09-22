@@ -114,9 +114,11 @@ def render_cbs(block: CbsBlock | None) -> list[str]:
 
     if block.count_matches is False:
         lines.append(
-            f"  AVISO: conditionBasedServicesCount dice {block.reported_count} pero el "
-            f"desglose trae {len(block.items)} partidas. BMW no documenta la diferencia y "
-            f"no se explica aqui: se dan los dos numeros tal cual."
+            f"  conditionBasedServicesCount dice {block.reported_count}: es el maximo de "
+            f"avisos que este vehiculo puede transmitir, no los que tiene. El desglose trae "
+            f"{len(block.items)}, que son los transmitidos de verdad. El catalogo de BMW lo "
+            f"documenta asi, y ademas avisa de que no todos los avisos CBS del coche se "
+            f"transfieren."
         )
     return lines
 

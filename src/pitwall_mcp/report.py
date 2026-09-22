@@ -367,19 +367,28 @@ def _cbs_section(history: HistoryStore, vin: str) -> str:
 
 
 def _cbs_count_note(block: CbsBlock) -> str:
-    """State both numbers, and never pretend a mismatch is not there."""
+    """Give both numbers, and say what the counter actually is.
+
+    `conditionBasedServicesCount` is not a count of current warnings: the
+    catalogue defines it as the maximum number of service notifications the
+    vehicle can transmit. The block carries the ones actually transmitted, so
+    the two numbers are not supposed to agree.
+    """
     total = len(block.items)
     if block.reported_count is None:
         return f"El bloque trae {total} partidas. No hay contador guardado con el que comparar."
     if block.count_matches:
         return (
             f"El bloque trae {total} partidas y el contador "
-            f"<code>conditionBasedServicesCount</code> dice {block.reported_count}: coinciden."
+            f"<code>conditionBasedServicesCount</code> dice {block.reported_count}. Coinciden "
+            f"aqui, pero ese contador es el <em>maximo</em> transmisible, no un recuento: "
+            f"que cuadren es casualidad."
         )
     return (
-        f"El contador <code>conditionBasedServicesCount</code> dice {block.reported_count} "
-        f"mientras el bloque trae {total} partidas. Es una discrepancia sin explicar: "
-        f"se dan los dos numeros y no se ajusta ninguno."
+        f"El contador <code>conditionBasedServicesCount</code> dice {block.reported_count}: "
+        f"es el maximo de avisos que el vehiculo puede transmitir, no los que tiene. El "
+        f"bloque trae {total} partidas, las transmitidas de verdad. No es una discrepancia: "
+        f"el catalogo de BMW lo define asi."
     )
 
 

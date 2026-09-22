@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from types import SimpleNamespace
+
 import pytest
 from conftest import FakeTokens, load_fixture
 
@@ -57,6 +60,58 @@ async def test_every_tool_is_registered(bare_server):
     """The MCP surface is complete and inspectable from block A onwards."""
     tools = await bare_server.list_tools()
     assert {tool.name for tool in tools} == EXPECTED_TOOLS
+
+
+def test_login_without_a_client_id_says_where_to_get_one(capsys, monkeypatch, bare_settings):
+    """Nothing is attempted without a client id, and the message says what to do."""
+    from pitwall_mcp import server as server_module
+
+    monkeypatch.setattr(server_module, "load_settings", lambda: bare_settings)
+
+    assert server_module.main(["--login"]) == 1
+    assert "PITWALL_CLIENT_ID" in capsys.readouterr().err
+
+
+def test_login_stores_the_tokens_and_never_calls_cardata(capsys, monkeypatch, ready_settings):
+    """The device flow is the package's own, so a pip install can authenticate.
+
+    The flow is faked here: no test opens a connection. What is checked is that
+    --login runs it, reports where the tokens landed, and points at the repo for
+    the container, which this server never creates.
+    """
+    from pitwall_mcp import server as server_module
+
+    bundle = SimpleNamespace(
+        scope="cardata:api:read",
+        refresh_obtained_at="2026-09-22T06:00:00Z",
+        refresh_expires_at=datetime(2026, 10, 6, 6, 0, tzinfo=UTC),
+    )
+
+    class FakeManager:
+        def __init__(self, settings):
+            self.settings = settings
+
+        async def device_login(self, on_prompt):
+            on_prompt(
+                SimpleNamespace(
+                    verification_uri="https://example.invalid/device",
+                    verification_uri_complete=None,
+                    user_code="ABCD-1234",
+                    expires_in=300,
+                )
+            )
+            return bundle
+
+    monkeypatch.setattr(server_module, "load_settings", lambda: ready_settings)
+    monkeypatch.setattr(server_module, "TokenManager", FakeManager)
+
+    assert server_module.main(["--login"]) == 0
+
+    out = capsys.readouterr().out
+    assert "ABCD-1234" in out
+    assert "Login completado" in out
+    assert str(ready_settings.token_file) in out
+    assert "bootstrap_containers.py" in out
 
 
 async def test_no_tool_can_write_to_the_vehicle(bare_server):

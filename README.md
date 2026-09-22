@@ -34,8 +34,8 @@ Partidas CBS: 5
   - Frenos delanteros [PENDING]: 1.600 km
   - Aceite de motor [OK]: 14.000 km, hasta 2027-07
   - Inspeccion tecnica (ITV) [OK]: hasta 2027-01
-  AVISO: conditionBasedServicesCount dice 9 pero el desglose trae 5 partidas.
-  BMW no documenta la diferencia y no se explica aqui: se dan los dos numeros.
+  conditionBasedServicesCount dice 9: es el maximo de avisos que este vehiculo
+  puede transmitir, no los que tiene. El desglose trae 5, los transmitidos.
 
 Prevision orientativa (calculo propio sobre los km de BMW, no un dato de BMW):
   Ritmo usado: 570 km/semana (media semanal que da BMW); tu historico local,
@@ -253,8 +253,11 @@ Viene de [`zweckj/bmw-cardata`](https://github.com/zweckj/bmw-cardata) (MIT), no
 de la API de CarData, de modo que no gasta ninguna petición de tu cuota. Los
 detalles están en [`spec/README.md`](spec/README.md).
 
-Si instalas el paquete en vez de clonar el repositorio, no tienes `scripts/`, así
-que el propio servidor sabe descargarlo:
+Si instalas el paquete en vez de clonar el repositorio no tienes `scripts/`, así
+que el ejecutable trae lo imprescindible: **`--fetch-catalogue` para el catálogo
+y `--login` para autenticarte**. Lo que sigue necesitando el repositorio es
+**crear el contenedor telemático**, y es a propósito: ese paso escribe en tu
+cuenta de BMW y por norma del proyecto no vive dentro del servidor.
 
 ```bash
 pitwall-mcp --fetch-catalogue          # junto a la base de datos
@@ -284,12 +287,17 @@ el [portal BMW CarData](https://bmw-cardata.bmwgroup.com). Necesitas los scopes
 ### 2. Login
 
 ```bash
-.venv/Scripts/python.exe scripts/login.py
+pitwall-mcp --login                              # instalado con pip
+.venv/Scripts/python.exe scripts/login.py        # o desde el repositorio: hace lo mismo
 ```
 
-Device flow: el script imprime una URL y un código, tú lo autorizas en el
-navegador. Los tokens se guardan en `~/.config/pitwall-mcp/tokens.json` con
-permisos `600`, **fuera del repositorio**.
+Device flow: imprime una URL y un código, tú lo autorizas en el navegador. Los
+tokens se guardan en `~/.config/pitwall-mcp/tokens.json` con permisos `600`,
+**fuera del repositorio**. Habla con el OAuth de BMW, no con la API de CarData,
+así que **no gasta cuota**.
+
+El script del repositorio es solo un envoltorio del mismo código: una única
+definición del flujo, y así quien instala con `pip` también puede autenticarse.
 
 El refresh token dura **14 días**. El servidor avisa de forma visible cuando
 quedan menos de 3; si caduca, hay que repetir este paso a mano.
@@ -400,9 +408,9 @@ Lo que ya se sabe de este coche, verificado con lecturas reales entre el 7 y el
   se queda en `SIN VEREDICTO` en vez de fingir uno. La única vía conocida para
   esa serie es el streaming de la Fase 2.
 - Quedan abiertos otros tres puntos:
-  - por qué el contador de CBS dice 9 cuando el desglose trae 5 partidas, y por
-    qué la memoria de averías anuncia 72 códigos —luego 67— trayendo 44
-    entradas en las dos lecturas;
+  - qué es la cabecera de la memoria de averías, que anuncia 72 códigos —luego
+    67— trayendo 44 entradas en las dos lecturas. Puede que sea un máximo, como
+    resultó serlo el contador de avisos CBS, pero eso es una sospecha;
   - en qué huso horario reinicia BMW la cuota diaria;
   - qué es el campo de kilómetros que acompaña a los avisos Check Control. Van
     dos interpretaciones probadas y las dos han caído, así que la herramienta lo

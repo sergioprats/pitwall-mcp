@@ -122,16 +122,19 @@ async def test_status_warns_when_the_service_threshold_is_close(
     assert "faltan 140" in text
 
 
-async def test_status_carries_the_count_discrepancy_to_the_user(
-    adapter, ready_settings, catalogue_obj
-):
-    """BMW says 9, the array has 5. Neither number is quietly dropped."""
+async def test_status_explains_what_the_cbs_counter_is(adapter, ready_settings, catalogue_obj):
+    """BMW says 9, the array has 5, and that is not a contradiction.
+
+    The catalogue defines conditionBasedServicesCount as the maximum number of
+    notifications the vehicle can transmit, not the ones it has. Both numbers
+    are given, and the counter is explained instead of called a discrepancy.
+    """
     text = await telematic_tools.get_vehicle_status(adapter, ready_settings, catalogue_obj)
 
-    assert "AVISO" in text
     assert "dice 9" in text
-    assert "5 partidas" in text
-    assert "no se explica aqui" in text
+    assert "maximo de avisos" in text
+    assert "El desglose trae 5" in text
+    assert "no se explica aqui" not in text
 
 
 async def test_status_lists_what_came_back_empty(adapter, ready_settings, catalogue_obj):

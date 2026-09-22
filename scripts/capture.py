@@ -212,7 +212,8 @@ def _report_cbs(entries: dict) -> None:
 
     print(f"{len(items)} partida(s). conditionBasedServicesCount dice: {count.get('value')!r}")
     if count.get("value") and str(count["value"]).isdigit() and int(count["value"]) != len(items):
-        print("  DISCREPANCIA: el contador y el array no coinciden. Se reportan ambos.")
+        print("  El contador es el MAXIMO transmisible, no un recuento: el catalogo lo")
+        print("  define asi. Las partidas de arriba son las transmitidas de verdad.")
     print()
     for item in items:
         print(f"  id={item.get('id')!r:<5} {item.get('title')}")

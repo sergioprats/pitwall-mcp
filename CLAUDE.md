@@ -182,10 +182,31 @@ había llegado con valor. Ese día los vacíos fueron 11. Las herramientas lo
 declaran ("Desglose CBS: no disponible") y se quedan con la cifra global. En esa
 lectura no hay previsión, porque no hay partidas de las que calcularla.
 
-**Discrepancia sin explicar:** `conditionBasedServicesCount` devolvió **9**
-mientras el array traía **5** partidas. Se desconoce el motivo. Las herramientas
-dan los dos números y **no fingen que cuadran**. El 2026-09-13 seguía igual: 9
-contra 5.
+**El contador no cuenta avisos. RESUELTO el 2026-09-22, y estábamos
+equivocados.** `conditionBasedServicesCount` devolvió **9** con **5** partidas en
+el array, y durante dos semanas se trató como una discrepancia sin explicar. La
+respuesta estaba en el catálogo desde el principio:
+
+> *"The value specifies the **maximum number** of service notifications
+> transmitted from the vehicle to BMW via telematics. The actual number of
+> service notifications transmitted (see separate CBS key) varies depending on
+> how the vehicle is used and whether relevant thresholds have been reached.
+> Note: Not all Condition Based service messages which occur in the vehicle are
+> also transferred."*
+
+O sea: **9 es el tope que este vehículo puede transmitir, no los avisos que
+tiene**; los 5 del array son los transmitidos de verdad. Encaja con lo observado:
+en 11 lecturas repartidas por 11 días, el array trajo siempre las mismas 5
+partidas (ids 2, 32, 1, 3, 100) y el contador siempre 9.
+
+**Dos lecciones, y la segunda importa más que la primera:**
+
+1. Las herramientas decían "BMW no documenta la diferencia" sobre algo que BMW
+   **sí** documenta. Corregido en `telematic_tools`, `report.py` y
+   `scripts/capture.py`.
+2. Se buscó en el swagger, que de estos campos no dice nada, y **no se releyó la
+   descripción del propio catálogo**, que es la fuente de verdad declarada en la
+   regla 5. Antes de declarar algo "sin explicar", hay que agotar el catálogo.
 
 **`serviceDistance.next` no es la partida más urgente. Verificado el
 2026-09-13.** El 7 de septiembre valía 2140 con los frenos delanteros a 2100 km
@@ -745,6 +766,22 @@ Estado comprobado el 2026-09-13:
       y contraseña de forma interactiva, y una tarea en segundo plano no puede
       recibirlos, así que se queda colgada sin subir nada. Usuario `__token__`,
       contraseña el token con su prefijo `pypi-`.
+- [ ] **0.1.1 preparada el 2026-09-22, sin publicar.** Al instalar la 0.1.0 en un
+      entorno limpio se vio el agujero: el paquete **no permitía autenticarse**.
+      `TokenManager.device_login` viajaba dentro, pero sin puerta de entrada; el
+      login solo existía en `scripts/login.py`, que no se empaqueta. Quien
+      instalara con `pip` no podía terminar la configuración. La 0.1.1 añade
+      **`pitwall-mcp --login`**, y `scripts/login.py` pasa a ser un envoltorio de
+      ese mismo código: una sola definición del flujo. **La creación del
+      contenedor sigue fuera del servidor a propósito** (regla 2), así que ese
+      paso continúa exigiendo el repositorio, y el mensaje final del login lo
+      dice con su URL. Versión subida en `__init__.py`, `pyproject.toml` y
+      `server.json` (dos sitios).
+
+      **Lección de empaquetado: probar el camino del usuario nuevo, no solo que
+      el wheel se construya.** `twine check` pasaba, el paquete instalaba y el
+      servidor arrancaba; el fallo solo aparece al intentar configurarlo desde
+      cero en un entorno limpio.
 - [x] **Registrado en `registry.modelcontextprotocol.io` el 2026-09-19**, como
       `io.github.sergioprats/pitwall-mcp` versión 0.1.0. `mcp-publisher validate`
       aprobó el `server.json` antes de enviarlo. El registro comprueba la
@@ -758,10 +795,11 @@ Orden recomendado: borrar la rama de backup, subir y hacer público, PyPI y, por
 último, el registro. Ese orden es obligatorio: el registro comprueba el paquete
 de PyPI, y PyPI enlaza al repositorio.
 
-**3. Abierto, pero no impide publicar:** la discrepancia 9 contra 5 del contador
-CBS, la de 72 contra 44 de la memoria de averías, el huso horario del reinicio de
-cuota y la Fase 2. **La prueba de la noche parado ya no está abierta: se hizo el
-2026-09-16 y salió negativa** (ver riesgo 11).
+**3. Abierto, pero no impide publicar:** la cabecera de la memoria de averías (72
+y luego 67, con 44 entradas las dos veces), el huso horario del reinicio de cuota
+y la Fase 2. **Dos que ya no están abiertas:** la prueba de la noche parado, hecha
+el 2026-09-16 y negativa (ver riesgo 11), y el contador de avisos CBS, que resultó
+ser un máximo transmisible y no un recuento (2026-09-22, riesgo 6).
 
 ---
 
@@ -782,8 +820,10 @@ cuota y la Fase 2. **La prueba de la noche parado ya no está abierta: se hizo e
    vehículo. No es que no se mueva: no llega. Con esto, no queda **ningún**
    dato en toda la API que informe sobre el software del coche.
 5. **Reset de cuota**: huso horario desconocido.
-6. **`conditionBasedServicesCount` no cuadra con el array**: devolvió 9 con 5
-   partidas. Sin explicación. No se inventa una.
+6. ~~`conditionBasedServicesCount` no cuadra con el array.~~ **CERRADO el
+   2026-09-22**: nunca fue una discrepancia. El catálogo lo define como el
+   **máximo transmisible**, no como un recuento. Ver arriba, en la sección de
+   CBS. Queda la lección: agotar el catálogo antes de declarar algo inexplicable.
 7. ~~Desfase de reloj de BMW.~~ **EXPLICADO el 2026-09-07**: no es desfase. Ver
    "Timestamps de petición" abajo.
 8. **`/basicData` no coincide con el swagger.** Este vehículo no devuelve

@@ -231,10 +231,20 @@ La sospecha de que estuviera ligado a un endpoint dedicado era **falsa**. Pero s
 Partidas de este U11: `Front Brake` (2), `Engine oil` (1), `Brake fluid` (3),
 `Statutory vehicle inspection` (32), `Vehicle check` (100).
 
-### Discrepancia sin explicar
+### El contador de CBS no cuenta avisos
 
-`conditionBasedServicesCount` devolvio **9** con **5** partidas en el array. No
-se sabe por que. Las herramientas dan los dos numeros y no fingen que cuadran.
+`conditionBasedServicesCount` devolvio **9** con **5** partidas en el array, y
+durante dias se trato como una discrepancia sin explicar. **No lo es. Resuelto el
+2026-09-22 leyendo el propio catalogo**, que lo define como *"the maximum number
+of service notifications transmitted from the vehicle to BMW via telematics"*, y
+anade que el numero realmente transmitido varia y que **no todos los avisos CBS
+del coche se transfieren**. Los 5 del array son los transmitidos; el 9 es el tope
+de ese vehiculo. Las herramientas dan los dos numeros y ahora explican cual es
+cual.
+
+La leccion es mas util que el dato: **el catalogo ya traia la respuesta**, y se
+tardo en encontrarla por buscarla en el swagger, que de estos campos no dice
+nada.
 
 ### Desfase de reloj
 

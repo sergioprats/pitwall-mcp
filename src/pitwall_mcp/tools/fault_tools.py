@@ -88,8 +88,10 @@ async def get_fault_memory(adapter: CarDataAdapter, settings: Settings) -> str:
     if memory.declared_count is not None and memory.declared_count != len(memory.codes):
         lines.append(
             f"  La cabecera dice {memory.declared_count}, pero el XML trae "
-            f"{len(memory.codes)} entradas. BMW no documenta la diferencia y aqui no se "
-            f"explica: se dan los dos numeros."
+            f"{len(memory.codes)} entradas. BMW no documenta que es esa cabecera. El "
+            f"contador de avisos CBS resulto ser un maximo transmisible y no un recuento, "
+            f"asi que esta podria serlo tambien, pero eso es una sospecha, no un dato: se "
+            f"dan los dos numeros y no se ajusta ninguno."
         )
     lines.extend(
         [

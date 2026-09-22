@@ -151,13 +151,18 @@ def test_the_report_decodes_the_double_encoded_cbs(capsys, settings):
     assert "es un centinela" in out  # "null" and "-" are flagged, not parsed
 
 
-def test_the_report_flags_the_count_discrepancy(capsys, settings):
-    """The counter said 9 while the array held 5. Report both, explain neither."""
+def test_the_report_explains_what_the_cbs_counter_is(capsys, settings):
+    """The counter said 9 while the array held 5, and that is not a mismatch.
+
+    The catalogue defines it as the maximum the vehicle can transmit, so both
+    numbers are reported and the counter is explained.
+    """
     capture.report_telematic(load_fixture("telematic_real.json"), settings)
     out = capsys.readouterr().out
 
-    assert "DISCREPANCIA" in out
-    assert "Se reportan ambos" in out
+    assert "MAXIMO transmisible" in out
+    assert "transmitidas de verdad" in out
+    assert "DISCREPANCIA" not in out
 
 
 def test_the_mappings_report_flags_a_non_primary_vin(capsys):

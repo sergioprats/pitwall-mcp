@@ -194,14 +194,16 @@ def test_cbs_section_labels_each_item_and_shows_its_distance(history):
     assert "14.000 km" in html
 
 
-def test_cbs_reports_both_numbers_and_declares_the_discrepancy(history):
+def test_cbs_reports_both_numbers_and_explains_the_counter(history):
+    """The counter is the maximum the car can transmit, not a count of items."""
     record_cbs(history, count="9")
 
     html = render_report(history, FAKE_VIN, now=NOW)
 
-    assert "discrepancia" in html
+    assert "maximo de avisos" in html
     assert "9" in html
     assert "2 partidas" in html
+    assert "discrepancia sin explicar" not in html
 
 
 def test_cbs_null_sentinel_is_never_printed_as_a_date(history):

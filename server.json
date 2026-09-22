@@ -3,7 +3,7 @@
   "name": "io.github.sergioprats/pitwall-mcp",
   "title": "pitwall-mcp",
   "description": "Solo lectura sobre BMW CarData: mantenimiento, neumaticos y bateria de 12V. No afiliado a BMW AG.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "url": "https://github.com/sergioprats/pitwall-mcp",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "pitwall-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": {
         "type": "stdio"
       },

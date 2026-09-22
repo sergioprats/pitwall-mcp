@@ -7,6 +7,7 @@ printed there corrupts the protocol.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import logging
 import sys
 from pathlib import Path
@@ -14,9 +15,11 @@ from pathlib import Path
 from mcp.server.mcpserver import MCPServer
 
 from . import __version__
+from .cardata.auth import TokenManager
 from .cardata.errors import PitwallError
 from .config import load_settings
 from .fetch import describe, fetch_catalogue
+from .storage.db import parse_iso
 from .tools import ToolContext, register_tools
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,6 +72,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--login",
+        action="store_true",
+        help=(
+            "autoriza esta aplicacion en tu cuenta BMW y guarda los tokens. Habla con el "
+            "OAuth de BMW, NO con la API de CarData, asi que no gasta cuota."
+        ),
+    )
+    parser.add_argument(
         "--out",
         metavar="RUTA",
         default=None,
@@ -92,11 +103,70 @@ def _fetch_catalogue_command(out: str | None) -> int:
     return 0
 
 
+def _login_prompt(device) -> None:  # noqa: ANN001 - library DeviceCodeResponse
+    """Print what the user has to do in the browser. Opens nothing on its own."""
+    print()
+    print("=" * 70)
+    print("Autoriza pitwall-mcp en tu cuenta BMW:")
+    print()
+    print(f"  1. Abre: {device.verification_uri}")
+    if device.verification_uri_complete:
+        print(f"     (o directamente: {device.verification_uri_complete})")
+    print(f"  2. Introduce el codigo: {device.user_code}")
+    print(f"  3. Este comando espera hasta {device.expires_in} segundos.")
+    print("=" * 70)
+    print()
+    print("Esperando a que autorices...", flush=True)
+
+
+def _login_command() -> int:
+    """Run the OAuth device flow and store the tokens.
+
+    Lives here, and not only in `scripts/login.py`, because someone who installs
+    the package from PyPI has no `scripts/` directory: without this they could
+    not obtain a token at all. It talks to the GCDM OAuth endpoint, never to the
+    CarData REST API, so it consumes none of the 50 daily requests.
+    """
+    settings = load_settings()
+    if not settings.client_id:
+        print(
+            "ERROR: falta PITWALL_CLIENT_ID. Crea tu aplicacion CarData en "
+            "https://bmw-cardata.bmwgroup.com y pon su client id en el fichero .env, "
+            "o exportalo como variable de entorno.",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        bundle = asyncio.run(TokenManager(settings).device_login(_login_prompt))
+    except PitwallError as error:
+        print(f"ERROR: {error.message}", file=sys.stderr)
+        return 1
+
+    print()
+    print("Login completado.")
+    print(f"  Tokens guardados en: {settings.token_file}")
+    print(f"  Scopes concedidos: {bundle.scope or 'no informados por BMW'}")
+    if parse_iso(bundle.refresh_obtained_at):
+        print(
+            f"  El refresh token caduca aproximadamente el "
+            f"{bundle.refresh_expires_at.strftime('%Y-%m-%d %H:%M UTC')} (14 dias). "
+            f"Antes de esa fecha hay que repetir este login."
+        )
+    print()
+    print("Siguiente paso: crear el contenedor telematico. Eso NO lo hace este servidor,")
+    print("vive en scripts/bootstrap_containers.py, en el repositorio:")
+    print("  https://github.com/sergioprats/pitwall-mcp")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Run the server over stdio, or fetch the catalogue and exit."""
+    """Run the server over stdio, or run one of the setup commands and exit."""
     args = _parse_args(argv)
     if args.fetch_catalogue:
         return _fetch_catalogue_command(args.out)
+    if args.login:
+        return _login_command()
 
     settings = load_settings()
     logging.basicConfig(
