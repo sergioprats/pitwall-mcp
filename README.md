@@ -2,6 +2,10 @@
 
 <!-- mcp-name: io.github.sergioprats/pitwall-mcp -->
 
+[![CI](https://github.com/sergioprats/pitwall-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/sergioprats/pitwall-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pitwall-mcp)](https://pypi.org/project/pitwall-mcp/)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
+
 Servidor MCP local, **de solo lectura**, sobre la API BMW CarData de un
 BMW X1 sDrive18i (U11, gasolina, España).
 
@@ -340,7 +344,21 @@ Para Claude Desktop o cualquier cliente MCP:
 ```
 
 **Ningún test hace llamadas reales.** Todos van contra fixtures grabados a mano
-a partir de los esquemas del swagger. Una suite que gaste cuota es un bug.
+a partir de los esquemas del swagger. Una suite que gaste cuota es un bug, y la
+fixture `no_network` lo hace cumplir: hace fallar cualquier intento de abrir una
+conexión de verdad.
+
+Eso mismo corre en GitHub Actions en cada push y en cada pull request, sobre
+**Linux y Windows, con Python 3.12 y 3.13**. El flujo empieza descargando el
+catálogo, porque el repositorio no lo redistribuye, y **no necesita ningún
+secreto**: si un test intentara llamar a la API de BMW, fallaría.
+
+Además se ejecuta **una vez por semana**, sin que nadie toque nada. No es por
+costumbre: como el catálogo se descarga en cada ejecución, esa pasada semanal
+avisa si el catálogo de origen **deja de traer un descriptor en el que el
+proyecto se apoya**. Entonces falla un test, y te enteras por correo en vez de
+por una herramienta comportándose raro meses después. Ojo con lo que eso no
+hace: no vigila cualquier cambio del catálogo, solo los que romperían algo.
 
 Documentación relevante:
 

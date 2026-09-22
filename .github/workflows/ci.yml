@@ -3,21 +3,39 @@ name: CI
 # El repositorio no incluye el catalogo telematico de BMW, asi que el primer
 # paso de cada ejecucion es descargarlo. Esa descarga es de GitHub, no de la API
 # de CarData: no gasta ninguna peticion de la cuota diaria.
+#
+# La ejecucion semanal no es un capricho: como el catalogo se descarga fresco en
+# cada ejecucion, la propia suite avisa si el catalogo de origen deja de traer un
+# descriptor en el que se apoya el proyecto. No hace falta un trabajo aparte.
 
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Lunes a las 06:17 UTC. Minuto raro a proposito: las horas en punto son las
+    # mas congestionadas en los runners compartidos.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Windows entra en la matriz porque el desarrollo es en Windows y el
+    # proyecto toca rutas de usuario y permisos del fichero de tokens: una
+    # regresion de esas no la ve un runner de Linux.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Instalar el proyecto
         run: pip install -e ".[dev]"
@@ -31,4 +49,5 @@ jobs:
       - name: Tests
         # Ningun test toca la red: la fixture no_network hace fallar cualquier
         # intento de abrir una conexion real. Una suite que gaste cuota es un bug.
+        # Por eso este flujo no necesita ningun secreto.
         run: python -m pytest
