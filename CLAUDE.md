@@ -58,6 +58,30 @@ hacerlo en ningún fichero, paquete ni descripción.
 - SQLite (stdlib) para caché, cuota e histórico
 - `pytest` + `pytest-asyncio`
 
+### Integración continua
+
+`.github/workflows/ci.yml`, desde el 2026-09-08. En cada push a `main`, en cada
+pull request, **una vez por semana** (lunes 06:17 UTC) y a mano si hace falta.
+Matriz ampliada el 2026-09-22 a **Linux y Windows con Python 3.12 y 3.13**: los
+cuatro trabajos en verde a la primera, Windows en unos 57 s y Linux en 21 s.
+Windows está en la matriz porque el desarrollo es en Windows y el proyecto toca
+rutas de usuario y los permisos `600` del fichero de tokens, que ahí no
+significan lo mismo. `fail-fast` desactivado, para que un fallo en una
+plataforma no oculte el resultado de la otra.
+
+**El flujo no necesita ni un secreto**, y no lo tendrá: ningún test toca la red,
+y la fixture `no_network` hace fallar cualquier intento de abrir una conexión
+real. El primer paso descarga el catálogo, porque el repositorio no lo
+redistribuye.
+
+**La pasada semanal tiene un motivo concreto.** Como el catálogo se descarga
+fresco en cada ejecución, `test_every_descriptor_is_verified_against_the_catalogue`
+falla si el catálogo de origen deja de traer un descriptor en el que se apoya el
+proyecto. No vigila cualquier cambio del catálogo, solo los que romperían algo, y
+así se declara en el README. **No sirve `refresh_catalogue.py --check` para esto**:
+compara contra el catálogo local, que en el CI no existe, así que vería los 294
+descriptores como nuevos y fallaría todas las semanas sin motivo.
+
 ---
 
 ## API real (verificada contra el swagger oficial)
